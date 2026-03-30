@@ -52,3 +52,9 @@ See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for full protocol and examples.
 ## Context Management
 
 @.claude/docs/context-management.md
+
+## Project Memory
+
+At the start of every conversation, read `.claude/memory/MEMORY.md` to restore project context, design progress, and user preferences. This file is tracked by git and is the authoritative memory source across all machines.
+
+Additional memory files are listed in `.claude/memory/MEMORY.md`.
