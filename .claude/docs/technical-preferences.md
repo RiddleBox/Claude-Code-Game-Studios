@@ -5,42 +5,47 @@
 
 ## Engine & Language
 
-- **Engine**: [TO BE CONFIGURED — run /setup-engine]
-- **Language**: [TO BE CONFIGURED]
-- **Rendering**: [TO BE CONFIGURED]
-- **Physics**: [TO BE CONFIGURED]
+- **Engine**: Godot 4.6.1
+- **Godot Executable**: `D:\3_Tool\Godot_v4.6.1-stable`
+- **Language**: GDScript (primary), C++ via GDExtension (performance-critical only)
+- **Rendering**: Forward+ (default, desktop)
+- **Physics**: Jolt (Godot 4.6 default)
 
 ## Naming Conventions
 
-- **Classes**: [TO BE CONFIGURED]
-- **Variables**: [TO BE CONFIGURED]
-- **Signals/Events**: [TO BE CONFIGURED]
-- **Files**: [TO BE CONFIGURED]
-- **Scenes/Prefabs**: [TO BE CONFIGURED]
-- **Constants**: [TO BE CONFIGURED]
+- **Classes**: PascalCase (e.g., `PetController`)
+- **Variables**: snake_case (e.g., `move_speed`)
+- **Functions**: snake_case (e.g., `update_mood()`)
+- **Signals/Events**: snake_case past tense (e.g., `mood_changed`, `dialogue_finished`)
+- **Files**: snake_case matching class (e.g., `pet_controller.gd`)
+- **Scenes/Prefabs**: PascalCase matching root node (e.g., `PetController.tscn`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_ENERGY`)
 
 ## Performance Budgets
 
-- **Target Framerate**: [TO BE CONFIGURED]
-- **Frame Budget**: [TO BE CONFIGURED]
+- **Target Framerate**: 60fps
+- **Frame Budget**: 16.6ms
 - **Draw Calls**: [TO BE CONFIGURED]
 - **Memory Ceiling**: [TO BE CONFIGURED]
 
 ## Testing
 
-- **Framework**: [TO BE CONFIGURED]
+- **Framework**: GUT (Godot Unit Testing)
 - **Minimum Coverage**: [TO BE CONFIGURED]
-- **Required Tests**: Balance formulas, gameplay systems, networking (if applicable)
+- **Required Tests**: Gameplay systems, state machines, Aria interface boundary
 
 ## Forbidden Patterns
 
 <!-- Add patterns that should never appear in this project's codebase -->
-- [None configured yet — add as architectural decisions are made]
+- No `await` inside `_process()` or `_physics_process()`
+- No hardcoded strings for dialogue/UI text (use string keys)
+- No direct coupling to Aria API — always go through the interface layer
 
 ## Allowed Libraries / Addons
 
 <!-- Add approved third-party dependencies here -->
-- [None configured yet — add as dependencies are approved]
+- GUT (Godot Unit Testing) — testing framework
+- [None else configured yet — add as dependencies are approved]
 
 ## Architecture Decisions Log
 
