@@ -11,9 +11,9 @@
 | 统计 | 数量 |
 |------|------|
 | 总系统数 | 22 |
-| 已设计 | 12 |
+| 已设计 | 20 |
 | 设计中 | 0 |
-| 未开始 | 10 |
+| 未开始 | 2 |
 | Future Vision | 4 |
 
 ---
@@ -58,12 +58,12 @@
 
 | # | ID | 系统名 | 状态 | GDD 文件 | 依赖 | 备注 |
 |---|----|--------|------|----------|------|------|
-| 17 | C6 | 关系值系统 | ✅ 已设计 | design/gdd/c6-relationship-system.md | F3, F4 | 深化机制的量化 |
-| 18 | F5 | Aria 接口层 | ✅ 已设计 | design/gdd/f5-aria-interface.md | — | AI 联通 + 降级模式 |
-| 19 | F6 | 角色上下文管理器 | 🔴 未开始 | — | F4, C5 | 动态 System Prompt 生成 |
-| 20 | C7 | 对话记忆库 | 🔴 未开始 | — | F4, F6, C5, C6 | 记忆积累 + 共鸣成长触发 |
-| 21 | Fe3 | 朋友圈系统 | 🔴 未开始 | — | C4, C5 | 世界观深度扩展 |
-| 22 | Fe4 | 共鸣成长系统 | 🔴 未开始 | — | C5, C6, C7 | 性格渐变完整实现 |
+| 17 | C6 | 关系值系统 | ✅ 已设计 (公式已闭环) | design/gdd/c6-relationship-system.md | F3, F4 | 深化机制的量化 |
+| 18 | F5 | Aria 接口层 | ✅ 已设计 (降级逻辑闭环) | design/gdd/f5-aria-interface.md | — | AI 联通 + 降级模式 |
+| 19 | F6 | 角色上下文管理器 | ✅ 已设计 (公式已闭环) | design/gdd/f6-character-context-manager.md | F4, C5 | 动态 System Prompt 生成 |
+| 20 | C7 | 对话记忆库 | ✅ 已设计 (公式已闭环) | design/gdd/c7-dialogue-memory-library.md | F4, F6, C5, C6 | 记忆积累 + 共鸣成长触发 |
+| 21 | C8 | 社交圈系统 | ✅ 已设计 (轮转逻辑闭环) | design/gdd/c8-social-circle-system.md | C4, C5 | 角色社交图谱数据层 |
+| 22 | Fe4 | 共鸣成长系统 | ✅ 已设计 (公式已闭环) | design/gdd/fe4-resonance-growth-system.md | C5, C6, C7 | 性格渐变完整实现 |
 
 ---
 
@@ -75,6 +75,7 @@
 | FV2 | 跨用户串门系统 | 不同玩家的桌宠互相拜访 | DLC / 远期 |
 | FV3 | 创意工坊支持 | 玩家自制故事包 | 远期 |
 | FV4 | Steam 平台集成 | 成就、截图分享等 | 完整版 |
+| FV5 | 角色生活窥视前端 | 以日历、社交动态流等形式让玩家主动查看角色的生活片段；C8 社交圈数据的前端呈现层 | MVP 之后评估 |
 
 ---
 

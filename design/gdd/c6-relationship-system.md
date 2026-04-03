@@ -117,57 +117,45 @@ engagement: {
 
 ## Formulas
 
+## Formulas
+
 > ⚠️ **待深入研究**：以下公式为初稿框架，系数需原型验证后调整。
 
-### 公式一：参与比例计算
+### 1. 关系增长通用公式
 
-```
-engagement_ratio(axis) = completed(axis) / max(shown(axis), 1)
-```
+所有主动积累行为均遵循以下加成逻辑：
+`Value_delta = Base_Rate * (1.0 + (C5.Specific_Trait * PERSONALITY_SENSITIVITY))`
 
-| 变量 | 含义 | 范围 |
-|------|------|------|
-| `completed(axis)` | 玩家完整参与该性格标签内容的次数 | ≥ 0 |
-| `shown(axis)` | 该标签内容被展示的总次数 | ≥ 0 |
-| `engagement_ratio` | 参与比例 | 0.0–1.0 |
+- **熟悉感 (Familiarity)**: 受 `boldness` (大胆) 影响。大胆的角色更不排斥接触。
+- **信任感 (Trust)**: 受 `warmth` (温暖) 影响。温暖的角色更容易建立信任。
+- **共鸣度 (Resonance)**: 受 `melancholy` (忧郁) 影响。细腻的角色在深层对话中更容易产生共鸣。
 
-**示例**：curiosity 标签内容展示了 15 次，玩家完整读完 12 次：
-`engagement_ratio("curiosity") = 12 / 15 = 0.80`
+### 2. 关系衰减公式 (Time Decay)
+
+为体现“真实存在感”，长时间不交互会导致关系极缓慢疏远（仅在在线且挂机时计算）：
+
+`Value_new = Value_old - (Idle_Minutes * DECAY_RATE)`
+
+- `Idle_Minutes`: 玩家超过 30 分钟未进行任何点击或对话后的挂机时长（以分钟为单位）。
+- **衰减下限**：关系值不会因衰减低于当前阶段的最小值（如 `Acquaintance` 阶段不会跌回 `Stranger`）。
+
+### 3. 参与比例计算 (Engagement Tracking)
+
+用于 Fe4 计算性格漂移的方向：
+`engagement_ratio(axis) = completed(axis) / max(shown(axis), 1)`
+
+- `completed(axis)`: 玩家完整参与该性格标签内容的次数。
+- `shown(axis)`: 该标签内容被展示的总次数。
+
+### 4. 性格漂移向量 (Drift Vector)
+
+由 C6 提供原始数据，Fe4 在归来时计算：
+
+`drift_delta(axis) = (engagement_ratio(axis) - current_personality(axis)) * resonance * DRIFT_RATE`
+
+- `resonance`: C6 共鸣度，作为性格受玩家影响的“开关”和速率倍率。共鸣度越高，角色性格漂移越快。
 
 ---
-
-### 公式二：关系轴积累（familiarity，tick 驱动）
-
-```
-familiarity += FAMILIARITY_TICK_RATE × delta_minutes
-familiarity = clamp(familiarity, 0.0, 1.0)
-```
-
-**示例**：在线 100 分钟，FAMILIARITY_TICK_RATE = 0.0001：
-`familiarity += 0.0001 × 100 = 0.01`
-→ 满值（1.0）需约 10,000 分钟在线（约 167 小时）
-
----
-
-### 公式三：Fe4 使用的漂移方向向量（C6 暴露接口，Fe4 计算）
-
-```
-drift_target(axis) = engagement_ratio(axis)
-drift_delta(axis)  = (drift_target - current_personality(axis))
-                     × resonance
-                     × DRIFT_RATE
-```
-
-| 变量 | 含义 | 范围 |
-|------|------|------|
-| `drift_target` | 玩家行为偏好指向的性格目标值 | 0.0–1.0 |
-| `current_personality(axis)` | C5 当前性格轴值 | 0.0–1.0 |
-| `resonance` | C6 共鸣度，越高漂移越快 | 0.0–1.0 |
-| `DRIFT_RATE` | 全局漂移速率系数（待定） | 建议 0.001–0.01 |
-| `drift_delta` | 本次漂移量（由 Fe4 应用到 C5） | 小数值 |
-
-**示例**：curiosity 参与率 0.80，当前性格值 0.42，resonance 0.6，DRIFT_RATE 0.005：
-`drift_delta = (0.80 - 0.42) × 0.6 × 0.005 = 0.00114`
 
 ## Edge Cases
 
@@ -210,6 +198,8 @@ drift_delta(axis)  = (drift_target - current_personality(axis))
 | `DAILY_CLICK_CAP` | 20 次 | 10–50 | 防止点击刷关系值的每日上限 |
 | `TRUST_FRAGMENT_RATE` | 0.005 / 次归来 | 0.001–0.02 | 碎片完整展示对 trust 的贡献 |
 | `RESONANCE_ARIA_RATE` | 0.01 / 次交互 | 0.005–0.05 | Aria 交互对 resonance 的贡献 |
+| `PERSONALITY_SENSITIVITY` | 0.5 | 0.1–1.0 | 性格对关系增长的影响强度 |
+| `DECAY_RATE` | 0.00001 / 分钟 | 0–0.0001 | 挂机时的关系衰减速率 |
 | `DRIFT_RATE` | 0.005 | 0.001–0.01 | Fe4 计算性格漂移的全局速率系数 |
 
 ## Acceptance Criteria
@@ -227,9 +217,9 @@ drift_delta(axis)  = (drift_target - current_personality(axis))
 
 ## Open Questions
 
-| # | 问题 | 状态 |
-|---|------|------|
-| OQ-01 | 所有积累速率数值需原型阶段实际游玩后调校 | 待研究 |
-| OQ-02 | 关系值是否应该随长期不活跃缓慢衰减？衰减速率如何设计？ | 待定 |
-| OQ-03 | C4 解锁门控的具体阈值（如 trust ≥ 0.3 才解锁某事件线）在 C4 文档中定义，C6 不持有 | 待 C4 扩展 |
-| OQ-04 | 是否需要向玩家以某种隐晦方式呈现关系深度（如角色表情微变化、背景细节变化） | 待美术/叙事方向确认 |
+| # | 问题 | 状态 | 备注 |
+|---|------|------|------|
+| OQ-01 | 所有积累速率数值需原型阶段实际游玩后调校 | 待研究 | — |
+| OQ-02 | 关系值是否应该随长期不活跃缓慢衰减？ | ✅ 已解决 | 引入挂机衰减公式，设定阶段下限 |
+| OQ-03 | C4 解锁门控的具体阈值 | 待 C4 扩展 | — |
+| OQ-04 | 是否需要向玩家以某种隐晦方式呈现关系深度 | 待美术确认 | — |
