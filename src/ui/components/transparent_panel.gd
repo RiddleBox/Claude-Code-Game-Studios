@@ -163,6 +163,7 @@ static func is_in_transparent_window() -> bool:
 	return false
 
 ## 获取推荐的最小尺寸（避免边框重叠）
-func get_minimum_size() -> Vector2:
+## 注意：不使用 get_minimum_size() 以避免覆盖 Control 原生方法
+func get_panel_minimum_size() -> Vector2:
 	var min_size = border_width * 4  # 每边留出边框空间
 	return Vector2(min_size, min_size)

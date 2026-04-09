@@ -59,7 +59,7 @@ func _update_label_settings() -> void:
 	settings.font_color = modulate  # 使用节点自身的modulate作为文字颜色
 	settings.outline_size = outline_size
 	settings.outline_color = outline_color
-	settings.antialiasing = TextServer.ANTIALIASING_GRAYSCALE
+	settings.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 
 	label_settings = settings
 
@@ -104,8 +104,9 @@ func _update_text_visibility() -> void:
 	# MVP阶段：使用轮廓和阴影增强可读性
 	pass
 
-## 设置文字（同步到阴影标签）
-func set_text(new_text: String) -> void:
+## 设置文字内容（同步到阴影标签）
+## 注意：不使用 set_text() 以避免覆盖 Label 原生方法
+func update_text(new_text: String) -> void:
 	text = new_text
 	if _shadow_label:
 		_shadow_label.text = new_text
@@ -166,7 +167,7 @@ func get_text_rect() -> Rect2:
 ## 启用/禁用抗锯齿
 func set_antialiasing(enabled: bool) -> void:
 	if label_settings:
-		label_settings.antialiasing = TextServer.ANTIALIASING_GRAYSCALE if enabled else TextServer.ANTIALIASING_NONE
+		label_settings.antialiasing = TextServer.FONT_ANTIALIASING_GRAY if enabled else TextServer.FONT_ANTIALIASING_NONE
 		if _shadow_label and _shadow_label.label_settings:
 			_shadow_label.label_settings.antialiasing = label_settings.antialiasing
 

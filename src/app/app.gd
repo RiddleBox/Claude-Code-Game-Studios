@@ -135,11 +135,11 @@ func _register_core_modules() -> void:
 	# F2: 角色状态机 (高优先级，依赖F1)
 	_register_f2_state_machine()
 
-		# F3: 时间/节奏系统 (中等优先级)
-		_register_f3_time_system()
+	# F3: 时间/节奏系统 (中等优先级)
+	_register_f3_time_system()
 
-		# UI: UI框架 (中等优先级，依赖F1)
-		_register_ui_framework()
+	# UI: UI框架 (中等优先级，依赖F1)
+	_register_ui_framework()
 
 	# 其他模块将在后续阶段注册
 	# TODO: 注册F4, F5等模块
