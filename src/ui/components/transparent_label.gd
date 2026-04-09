@@ -59,7 +59,8 @@ func _update_label_settings() -> void:
 	settings.font_color = modulate  # 使用节点自身的modulate作为文字颜色
 	settings.outline_size = outline_size
 	settings.outline_color = outline_color
-	settings.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+	# 注意：LabelSettings 在 Godot 4.x 中没有 antialiasing 属性
+	# 抗锯齿由 Viewport 或字体资源本身控制
 
 	label_settings = settings
 
@@ -164,12 +165,9 @@ func get_text_rect() -> Rect2:
 		return Rect2(position, text_rect.size)
 	return text_rect
 
-## 启用/禁用抗锯齿
-func set_antialiasing(enabled: bool) -> void:
-	if label_settings:
-		label_settings.antialiasing = TextServer.FONT_ANTIALIASING_GRAY if enabled else TextServer.FONT_ANTIALIASING_NONE
-		if _shadow_label and _shadow_label.label_settings:
-			_shadow_label.label_settings.antialiasing = label_settings.antialiasing
+## 启用/禁用抗锯齿（LabelSettings 不支持此属性，保留方法签名供未来扩展）
+func set_antialiasing(_enabled: bool) -> void:
+	pass  # LabelSettings 在 Godot 4.x 中无 antialiasing 属性，由字体资源控制
 
 ## 静态方法：创建适合透明窗口的标签
 static func create_for_transparent_window(text: String = "", font_size: int = 16) -> TransparentLabel:
