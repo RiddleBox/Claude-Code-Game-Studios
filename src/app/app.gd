@@ -418,10 +418,17 @@ func _register_f4_save_system() -> void:
 		push_error("[App] 无法加载F4存档系统模块类")
 		return
 
+	var instance = module_class.new()
+	if not instance:
+		push_error("[App] 无法实例化F4存档系统")
+		return
+
+	add_child(instance)  # 必须先加入场景树，Timer 才能正常工作
+
 	var config = _config.get("f4_save_system", {})
-	var success = _module_loader.register_module(
+	var success = _module_loader.register_module_instance(
 		"f4_save_system",
-		module_class,
+		instance,
 		config,
 		["f1_window_system"],  # 依赖F1窗口系统
 		[],  # 无可选依赖

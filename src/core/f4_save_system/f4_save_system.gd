@@ -341,7 +341,6 @@ func _load_from_disk() -> bool:
 	_validate_and_upgrade_save_data()
 
 	print("[F4] 存档加载成功: %s (%d 键值)" % [SAVE_FILE_PATH, _save_data.size()])
-	save_file_corrupted.emit(true)
 	return true
 
 func _save_to_disk() -> bool:
