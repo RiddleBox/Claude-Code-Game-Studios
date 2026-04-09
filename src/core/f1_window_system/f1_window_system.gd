@@ -27,7 +27,8 @@ signal mouse_exited_window()
 signal character_clicked()
 
 ## 原F1系统属性
-@onready var character_sprite: Sprite2D = $CharacterSprite
+# C1 实现前 CharacterSprite 子节点不存在，用 get_node_or_null 避免报错
+@onready var character_sprite: Sprite2D = get_node_or_null("CharacterSprite")
 
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
@@ -174,6 +175,11 @@ func _try_load_gdextension_hook() -> void:
 func _setup_fallback_click_passthrough() -> void:
 	# 回退方案: 使用 DisplayServer 多边形蒙版
 	# MVP 阶段: 仅角色矩形区域可交互，其他区域穿透
+	# 注意: character_sprite 在 C1 实现前可能为 null，跳过设置
+	if not character_sprite:
+		print("[F1] CharacterSprite 未就绪（C1 未实现），跳过点击穿透设置")
+		return
+
 	var character_rect = character_sprite.get_rect()
 	var _polygon = PackedVector2Array([
 		character_rect.position,
@@ -189,6 +195,8 @@ func _is_point_on_character_interactive(pos: Vector2) -> bool:
 	# 检查点是否在角色交互区域内
 	# 如果 GDExtension 已加载，它会通过 WM_NCHITTEST 处理像素级判定
 	# 这里作为备份逻辑
+	if not character_sprite:
+		return false
 	if win32_hook:
 		# GDExtension 会处理精确判定，这里只做粗略检查
 		return character_sprite.get_rect().has_point(pos)
@@ -198,7 +206,9 @@ func _is_point_on_character_interactive(pos: Vector2) -> bool:
 
 func _init_drag_handling() -> void:
 	# 初始化拖拽处理
-	print("[F1] 拖拽处理已初始化。角色精灵: ", character_sprite.name)
+	# 注意: character_sprite 在 C1 实现前可能为 null
+	var sprite_name = character_sprite.name if character_sprite else "（未就绪）"
+	print("[F1] 拖拽处理已初始化。角色精灵: ", sprite_name)
 
 func save_window_position() -> void:
 	# 保存窗口位置到 F4 存档系统
@@ -255,7 +265,7 @@ func _input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				# 判断是否点在角色身上
-				var click_pos = get_local_mouse_position()
+				var click_pos = get_viewport().get_mouse_position()
 				if _is_point_on_character_interactive(click_pos):
 					is_dragging = true
 					# 计算鼠标位置与窗口位置的偏移量

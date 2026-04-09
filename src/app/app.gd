@@ -140,7 +140,7 @@ func _register_core_modules() -> void:
 
 ## 注册F1窗口系统
 func _register_f1_window_system() -> void:
-	var module_class = load("res://src/core/f1_window_system.gd")
+	var module_class = load("res://src/core/f1_window_system/f1_window_system.gd")
 	if not module_class:
 		push_error("[App] 无法加载F1窗口系统模块类")
 		return
@@ -162,7 +162,7 @@ func _register_f1_window_system() -> void:
 
 ## 注册F2状态机
 func _register_f2_state_machine() -> void:
-	var module_class = load("res://src/gameplay/f2_character_state_machine.gd")
+	var module_class = load("res://src/core/f2_state_machine/f2_state_machine.gd")
 	if not module_class:
 		push_error("[App] 无法加载F2状态机模块类")
 		return
