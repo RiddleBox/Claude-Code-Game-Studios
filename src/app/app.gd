@@ -31,6 +31,9 @@ var status: AppStatus = AppStatus.BOOTING
 ## 启动时间
 var _startup_time: int = 0
 
+## 测试相关
+var _test_runner: Node = null
+
 ## 应用初始化
 func _ready() -> void:
 	_startup_time = Time.get_ticks_msec()
@@ -222,11 +225,19 @@ func _start_modules() -> void:
 		var startup_time = Time.get_ticks_msec() - _startup_time
 		print("[App] 应用启动完成，耗时: %d ms" % startup_time)
 		app_started.emit(true)
+
+		# Sprint 1 验证：自动运行集成测试
+		print("[App] Sprint 1 验证 - 开始集成测试...")
+		call_deferred("run_integration_tests")
 	else:
 		push_error("[App] 模块启动失败")
 		# 即使部分模块失败，应用仍可运行
 		status = AppStatus.RUNNING
 		app_started.emit(false)
+
+		# Sprint 1 验证：仍然尝试运行集成测试
+		print("[App] Sprint 1 验证 - 模块启动有错误，仍然尝试集成测试...")
+		call_deferred("run_integration_tests")
 
 ## 应用停止
 func stop() -> void:
@@ -400,3 +411,41 @@ func _register_ui_framework() -> void:
 		print("[App] UI框架已注册")
 	else:
 		push_error("[App] UI框架注册失败")
+
+## 集成测试功能
+
+## 运行集成测试
+func run_integration_tests() -> void:
+	print("[App] 开始运行集成测试...")
+
+	if status != AppStatus.RUNNING:
+		print("[App] 警告: 应用未处于运行状态，测试可能不准确")
+		print("[App] 当前状态: %s" % AppStatus.keys()[status])
+
+	# 清理之前的测试运行器
+	_cleanup_test_runner()
+
+	# 加载测试场景
+	var test_scene_path = "res://tests/integration/sprint1_test.tscn"
+	var test_scene = load(test_scene_path)
+	if not test_scene:
+		push_error("[App] 无法加载测试场景: %s" % test_scene_path)
+		return
+
+	# 实例化测试运行器
+	_test_runner = test_scene.instantiate()
+	if not _test_runner:
+		push_error("[App] 无法实例化测试场景")
+		return
+
+	# 添加到场景树
+	add_child(_test_runner)
+	print("[App] 测试运行器已启动")
+	print("[App] 测试结果将在控制台输出")
+
+## 清理测试运行器
+func _cleanup_test_runner() -> void:
+	if _test_runner and _test_runner.is_inside_tree():
+		_test_runner.queue_free()
+		_test_runner = null
+		print("[App] 测试运行器已清理")
