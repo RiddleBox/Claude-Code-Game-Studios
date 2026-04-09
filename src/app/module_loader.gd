@@ -42,6 +42,41 @@ func _ready() -> void:
 ## @param dependencies: 依赖模块列表
 ## @param optional_dependencies: 可选依赖模块列表
 ## @param priority: 模块优先级（0-100，越高越优先）
+## 注册已实例化的模块节点（从场景文件加载时使用）
+## 与 register_module() 功能相同，但接受现成的 Node 实例而非 GDScript 类
+func register_module_instance(module_id: String, instance: Node,
+					config: Dictionary = {}, dependencies: Array[String] = [],
+					optional_dependencies: Array[String] = [], priority: int = 50) -> bool:
+	if module_id in _modules:
+		push_error("[ModuleLoader] Module already registered: %s" % module_id)
+		return false
+
+	instance.module_id = module_id
+	instance.dependencies = dependencies.duplicate()
+	instance.optional_dependencies = optional_dependencies.duplicate()
+
+	_modules[module_id] = instance
+	_module_configs[module_id] = config.duplicate()
+	_module_priorities[module_id] = priority
+	add_child(instance)
+	print("[ModuleLoader] Module (scene instance) added to scene tree: %s" % module_id)
+
+	var module_info = {
+		"name": instance.module_name if instance.get("module_name") != null else module_id,
+		"category": instance.category if instance.get("category") != null else "unknown",
+		"priority": priority
+	}
+	_dependency_graph.add_module(module_id, dependencies, optional_dependencies, module_info)
+	_module_status[module_id] = {
+		"registered": true,
+		"initialized": false,
+		"started": false,
+		"errors": []
+	}
+	emit_signal("module_registered", module_id,
+		instance.module_name if instance.get("module_name") != null else module_id)
+	return true
+
 func register_module(module_id: String, module_class: GDScript,
 					config: Dictionary = {}, dependencies: Array[String] = [],
 					optional_dependencies: Array[String] = [], priority: int = 50) -> bool:

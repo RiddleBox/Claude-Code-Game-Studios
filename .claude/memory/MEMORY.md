@@ -53,6 +53,9 @@
 - [x] P0 MVP 层全部设计完成（9/9）
 - [x] P1 垂直切片层全部设计完成（7/7）：C3, C4, C5, Fe1, Fe6, P2, P3
 - [x] P2 Alpha 层全部设计完成（6/6）：C6, F5, F6, C7, C8, Fe4
+- [x] F1/F2 模块加载路径迁移至模块化目录结构（src/core/f1_window_system/, src/core/f2_state_machine/）
+- [x] ModuleLoader 新增 register_module_instance()，支持从 .tscn 场景实例化注册（有子节点的模块必须用此方式）
+- [x] 旧版 src/core/f1_window_system.gd 和 src/gameplay/f2_character_state_machine.gd 已废弃并备份（.backup）
 - [ ] 下一步：进入原型实现阶段，验证核心系统可行性
 - [ ] 架构决策记录：ADR-001（F1窗口系统）、ADR-002（C8离线模拟）
 - [ ] C6 关系值系统数值待原型阶段深入研究（见 project_c6_balance_research.md）

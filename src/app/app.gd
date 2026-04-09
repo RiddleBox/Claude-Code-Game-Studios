@@ -140,15 +140,20 @@ func _register_core_modules() -> void:
 
 ## 注册F1窗口系统
 func _register_f1_window_system() -> void:
-	var module_class = load("res://src/core/f1_window_system/f1_window_system.gd")
-	if not module_class:
-		push_error("[App] 无法加载F1窗口系统模块类")
+	# 从场景文件加载，确保 CharacterSprite 子节点正确实例化
+	var scene = load("res://src/core/f1_window_system/f1_window_system.tscn")
+	if not scene:
+		push_error("[App] 无法加载F1窗口系统场景")
+		return
+	var instance = scene.instantiate()
+	if not instance:
+		push_error("[App] 无法实例化F1窗口系统场景")
 		return
 
 	var config = _config.get("f1_window_system", {})
-	var success = _module_loader.register_module(
+	var success = _module_loader.register_module_instance(
 		"f1_window_system",
-		module_class,
+		instance,
 		config,
 		[],  # 无依赖
 		[],  # 无可选依赖

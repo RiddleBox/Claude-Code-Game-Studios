@@ -47,6 +47,20 @@
 - GUT (Godot Unit Testing) — testing framework
 - [None else configured yet — add as dependencies are approved]
 
+## Module Registration Pattern
+
+模块注册方式取决于模块是否有关联的 `.tscn` 场景文件：
+
+- **有 `.tscn` 的模块**（需要子节点，如 CharacterSprite、UI 节点等）：
+  使用 `register_module_instance()`，传入 `scene.instantiate()` 结果
+- **纯脚本模块**（只有逻辑，无子节点）：
+  使用 `register_module()`，传入 GDScript 类
+
+每个带场景的模块目录下应同时包含 `.gd` 和 `.tscn`，且 `.tscn` 中的
+`ext_resource uid` 必须与对应 `.gd.uid` 文件内容一致。
+
+详见 `coding-standards.md` 中的代码示例。
+
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
