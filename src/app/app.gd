@@ -135,8 +135,14 @@ func _register_core_modules() -> void:
 	# F2: 角色状态机 (高优先级，依赖F1)
 	_register_f2_state_machine()
 
+		# F3: 时间/节奏系统 (中等优先级)
+		_register_f3_time_system()
+
+		# UI: UI框架 (中等优先级，依赖F1)
+		_register_ui_framework()
+
 	# 其他模块将在后续阶段注册
-	# TODO: 注册F3, F4, F5等模块
+	# TODO: 注册F4, F5等模块
 
 ## 注册F1窗口系统
 func _register_f1_window_system() -> void:
@@ -350,3 +356,47 @@ func print_status_report() -> void:
 	var report = get_status_report()
 	print("[App] 状态报告:")
 	print(JSON.stringify(report, "\t"))
+
+## 注册F3时间系统
+func _register_f3_time_system() -> void:
+	var module_class = load("res://src/core/f3_time_system/f3_time_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载F3时间系统模块类")
+		return
+
+	var config = _config.get("f3_time_system", {})
+	var success = _module_loader.register_module(
+		"f3_time_system",
+		module_class,
+		config,
+		[],  # 原设计依赖F4，简化版为空依赖
+		["f4_save_system"],  # 可选依赖F4
+		80   # 中等优先级
+	)
+
+	if success:
+		print("[App] F3时间系统已注册")
+	else:
+		push_error("[App] F3时间系统注册失败")
+
+## 注册UI框架
+func _register_ui_framework() -> void:
+	var module_class = load("res://src/ui/ui_module.gd")
+	if not module_class:
+		push_error("[App] 无法加载UI框架模块类")
+		return
+
+	var config = _config.get("ui_framework", {})
+	var success = _module_loader.register_module(
+		"ui_framework",
+		module_class,
+		config,
+		["f1_window_system"],  # 依赖F1窗口系统
+		[],  # 无可选依赖
+		70   # 中等优先级
+	)
+
+	if success:
+		print("[App] UI框架已注册")
+	else:
+		push_error("[App] UI框架注册失败")
