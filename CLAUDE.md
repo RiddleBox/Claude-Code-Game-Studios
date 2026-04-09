@@ -75,4 +75,40 @@ godot --path <project_root> --headless --quit 2>&1 | Where-Object { $_ -match "^
 - Zero output = ✅ pass. Any `SCRIPT ERROR` or `ERROR` = ❌ fix before proceeding.
 - Warnings treated as errors (same as Godot project settings).
 - If Godot is unavailable, mark file as `⚠️ UNVERIFIED` in `production/session-state/active.md` and stop — do NOT mark the task complete.
-- **If the Edit tool fails twice on the same location: stop and report to user. Do NOT fall back to Bash/sed** — sed bypasses verification and silently introduces indent errors.
+- **If the Edit tool fails even once: use Python to fix, never sed/awk/Bash string manipulation.**
+
+## Edit Tool Failure Protocol (Mandatory)
+
+GDScript files use Tab indentation. The Edit tool requires byte-perfect `old_string` matching — any Tab/space mismatch or `\r\n` vs `\n` difference will silently fail.
+
+**When Edit fails, always use this Python pattern instead:**
+
+```python
+# Step 1: Read the file
+with open(r"D:\AIproject\claude-code-game-studios\src\...\file.gd", "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+# Step 2: Inspect the target lines (always do this first)
+for i, line in enumerate(lines[120:135], start=121):
+    print(f"{i:03d}: {repr(line)}")
+
+# Step 3: Modify by line number (not by content matching)
+lines[124] = "\t\tvar save_success = _save_last_timestamp_to_f4()\n"
+lines[125] = "\t\tif save_success:\n"
+
+# Step 4: Write back — MUST use newline="\n" (Godot requires LF, not CRLF)
+with open(r"D:\AIproject\claude-code-game-studios\src\...\file.gd", "w", encoding="utf-8", newline="\n") as f:
+    f.writelines(lines)
+```
+
+**Why Python, not sed/awk:**
+- `sed -i` on Windows (Git Bash) has inconsistent `\t` escape behavior — `\t` may not be interpreted as Tab
+- `sed` on Windows may silently convert LF to CRLF, breaking Godot parsing
+- Python `readlines()` preserves exact bytes; line-number indexing has no matching ambiguity
+- `newline="\n"` guarantees LF output regardless of OS
+
+**Rules:**
+1. Before modifying, always print `repr(line)` for the target lines to confirm Tab vs space
+2. Always use `encoding="utf-8"` and `newline="\n"`
+3. Always run headless verify after writing
+4. Never use sed, awk, or Bash heredoc for GDScript files
