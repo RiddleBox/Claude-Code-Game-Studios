@@ -3,6 +3,30 @@
 Last verified: 2026-02-12 | Engine: Godot 4.6
 
 Practices that are **new or changed** since the model's training data (~4.3).
+
+## Signal Semantics (Common Mistakes)
+
+Signals must only fire when the named event actually occurs. Misplacing `.emit()` is a silent logic bug.
+
+```gdscript
+# ❌ Wrong: emitting "corrupted" signal on normal successful load
+func _load_from_disk() -> bool:
+    # ... parse JSON ...
+    print("[F4] Load success")
+    save_file_corrupted.emit(true)  # BUG: fires on every load, not just corruption
+    return true
+
+# ✅ Correct: emit only in the error/corruption path
+func _load_from_disk() -> bool:
+    var parse_result = json.parse(json_text)
+    if parse_result != OK:
+        save_file_corrupted.emit(false)  # corruption detected, recovery failed
+        return false
+    # ... success path has NO emit of save_file_corrupted
+    return true
+```
+
+**Rule**: Before placing `.emit()`, ask — "Is this event actually happening right now?" If the answer is "only sometimes", the emit belongs in the conditional branch, not outside it.
 This supplements (not replaces) the agent's built-in knowledge.
 
 ## GDScript Common Mistakes (vs Other Languages)
