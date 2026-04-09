@@ -46,6 +46,7 @@ var _last_online_timestamp: int = 0  # TODO: 临时内存存储，应通过F4读
 var _total_minutes_played: float = 0.0
 var _total_minutes_elapsed: float = 0.0
 var _is_catching_up: bool = false
+var _f4_module: Node = null  # F4存档系统模块引用
 
 ## ==================== IModule接口方法 ====================
 
@@ -60,11 +61,15 @@ func initialize(_config: Dictionary = {}) -> bool:
 	# 获取当前时间戳
 	var current_timestamp: int = Time.get_unix_time_from_system()
 
-	# TODO: 从F4存档系统读取last_online_timestamp
-	# 临时方案：使用内存存储，首次启动设置为当前时间
-	if _last_online_timestamp == 0:
+	# 尝试从F4存档系统读取last_online_timestamp
+	var loaded_timestamp = _load_last_timestamp_from_f4()
+	if loaded_timestamp > 0:
+		_last_online_timestamp = loaded_timestamp
+		print("[F3] 从F4加载时间戳: %d" % _last_online_timestamp)
+	else:
+		# F4不可用或返回0，使用当前时间戳
 		_last_online_timestamp = current_timestamp
-		print("[F3] 警告：F4存档系统未实现，使用内存临时存储时间戳")
+		print("[F3] 警告：F4存档系统不可用或返回0，使用内存临时存储时间戳")
 
 	# 计算离线时长
 	var offline_minutes: float = _calculate_offline_minutes(current_timestamp)
@@ -115,13 +120,13 @@ func stop() -> void:
 		_timer.queue_free()
 		_timer = null
 
-	# TODO: 保存当前时间戳到F4存档系统
+	# 保存当前时间戳到F4存档系统
 	var current_timestamp: int = Time.get_unix_time_from_system()
-	print("[F3] 停止时当前时间戳: %d (应保存到F4)" % current_timestamp)
-
-	status = IModule.ModuleStatus.STOPPED
-	print("[F3] 时间/节奏系统已停止")
-
+	var save_success = _save_last_timestamp_to_f4()
+	if save_success:
+		print("[F3] 时间戳已保存到F4: %d" % current_timestamp)
+	else:
+		print("[F3] 警告: 时间戳保存到F4失败")
 ## IModule.shutdown() 实现
 func shutdown() -> void:
 	print("[F3] 关闭时间/节奏系统...")
@@ -169,6 +174,61 @@ func health_check() -> Dictionary:
 		"healthy": issues.is_empty() and status == IModule.ModuleStatus.RUNNING,
 		"issues": issues
 	}
+
+
+## ==================== F4存档集成辅助方法 ====================
+
+## 获取F4存档系统模块引用
+func _get_f4_module() -> Node:
+	if _f4_module:
+		return _f4_module
+
+	# 通过App节点查找F4模块
+	var app = get_node_or_null("/root/App")
+	if app and app.has_method("get_module"):
+		_f4_module = app.get_module("f4_save_system")
+		if _f4_module:
+			print("[F3] F4存档系统模块引用获取成功")
+		else:
+			print("[F3] 警告: F4存档系统模块未找到")
+
+	return _f4_module
+
+## 从F4加载最后在线时间戳
+func _load_last_timestamp_from_f4() -> int:
+	var f4 = _get_f4_module()
+	if not f4:
+		print("[F3] F4存档系统不可用，使用内存存储")
+		return 0
+
+	# 使用F4的load API
+	if f4.has_method("load"):
+		var loaded = f4.load("f3.last_online_timestamp", 0)
+		if loaded is int:
+			print("[F3] 从F4加载时间戳: %d" % loaded)
+			return loaded
+		else:
+			print("[F3] 警告: 从F4加载的时间戳类型错误")
+
+	return 0
+
+## 保存最后在线时间戳到F4
+func _save_last_timestamp_to_f4() -> bool:
+	var f4 = _get_f4_module()
+	if not f4:
+		print("[F3] F4存档系统不可用，跳过保存")
+		return false
+
+	# 使用F4的save API
+	if f4.has_method("save"):
+		var success = f4.save("f3.last_online_timestamp", _last_online_timestamp)
+		if success:
+			print("[F3] 时间戳保存到F4: %d" % _last_online_timestamp)
+		else:
+			print("[F3] 警告: 时间戳保存到F4失败")
+		return success
+
+	return false
 
 ## ==================== 核心时间逻辑 ====================
 

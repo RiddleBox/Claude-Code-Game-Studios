@@ -138,14 +138,13 @@ func _register_core_modules() -> void:
 	# F2: 角色状态机 (高优先级，依赖F1)
 	_register_f2_state_machine()
 
-	# F3: 时间/节奏系统 (中等优先级)
+	# F3: 时间/节奏系统 (中等优先级，可选依赖F4)
 	_register_f3_time_system()
 
 	# UI: UI框架 (中等优先级，依赖F1)
 	_register_ui_framework()
 
 	# 其他模块将在后续阶段注册
-	# TODO: 注册F4, F5等模块
 
 ## 注册F1窗口系统
 func _register_f1_window_system() -> void:
@@ -411,6 +410,28 @@ func _register_ui_framework() -> void:
 		print("[App] UI框架已注册")
 	else:
 		push_error("[App] UI框架注册失败")
+
+## 注册F4存档系统
+func _register_f4_save_system() -> void:
+	var module_class = load("res://src/core/f4_save_system/f4_save_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载F4存档系统模块类")
+		return
+
+	var config = _config.get("f4_save_system", {})
+	var success = _module_loader.register_module(
+		"f4_save_system",
+		module_class,
+		config,
+		["f1_window_system"],  # 依赖F1窗口系统
+		[],  # 无可选依赖
+		85   # 高优先级，介于F2(90)和F3(80)之间
+	)
+
+	if success:
+		print("[App] F4存档系统已注册")
+	else:
+		push_error("[App] F4存档系统注册失败")
 
 ## 集成测试功能
 
