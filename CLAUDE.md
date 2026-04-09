@@ -75,40 +75,61 @@ godot --path <project_root> --headless --quit 2>&1 | Where-Object { $_ -match "^
 - Zero output = ✅ pass. Any `SCRIPT ERROR` or `ERROR` = ❌ fix before proceeding.
 - Warnings treated as errors (same as Godot project settings).
 - If Godot is unavailable, mark file as `⚠️ UNVERIFIED` in `production/session-state/active.md` and stop — do NOT mark the task complete.
-- **If the Edit tool fails even once: use Python to fix, never sed/awk/Bash string manipulation.**
+- **If the Edit tool fails even once: run `patch_gd.py`. Never use sed/awk/Bash.**
 
 ## Edit Tool Failure Protocol (Mandatory)
 
-GDScript files use Tab indentation. The Edit tool requires byte-perfect `old_string` matching — any Tab/space mismatch or `\r\n` vs `\n` difference will silently fail.
+GDScript files use Tab indentation. The Edit tool requires byte-perfect `old_string` matching.
+Any Tab/space mismatch or `\r\n` vs `\n` difference causes silent failure.
 
-**When Edit fails, always use this Python pattern instead:**
+**When Edit fails, run these commands — copy and adapt, do not improvise:**
 
-```python
-# Step 1: Read the file
-with open(r"D:\AIproject\claude-code-game-studios\src\...\file.gd", "r", encoding="utf-8") as f:
-    lines = f.readlines()
+### Step 1 — Inspect target lines (always do this first)
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> --inspect <start_line> <end_line> --no-verify
+```
+Example:
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py src\core\f3_time_system\f3_time_system.gd --inspect 120 135 --no-verify
+```
+This prints `repr()` of each line so you can see exact Tab/space characters before touching anything.
 
-# Step 2: Inspect the target lines (always do this first)
-for i, line in enumerate(lines[120:135], start=121):
-    print(f"{i:03d}: {repr(line)}")
+### Step 2 — Apply the fix
 
-# Step 3: Modify by line number (not by content matching)
-lines[124] = "\t\tvar save_success = _save_last_timestamp_to_f4()\n"
-lines[125] = "\t\tif save_success:\n"
-
-# Step 4: Write back — MUST use newline="\n" (Godot requires LF, not CRLF)
-with open(r"D:\AIproject\claude-code-game-studios\src\...\file.gd", "w", encoding="utf-8", newline="\n") as f:
-    f.writelines(lines)
+**Replace a single line:**
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> <line_num> "<new_content>"
+```
+Use `\t` for Tab in `<new_content>`. Example:
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py src\core\f3_time_system\f3_time_system.gd 125 "\t\tvar save_success = _save_last_timestamp_to_f4()"
 ```
 
-**Why Python, not sed/awk:**
-- `sed -i` on Windows (Git Bash) has inconsistent `\t` escape behavior — `\t` may not be interpreted as Tab
-- `sed` on Windows may silently convert LF to CRLF, breaking Godot parsing
-- Python `readlines()` preserves exact bytes; line-number indexing has no matching ambiguity
-- `newline="\n"` guarantees LF output regardless of OS
+**Replace multiple lines at once:**
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> --multi "{\"125\": \"\t\tvar x = 1\", \"126\": \"\t\tif x:\"}"
+```
 
-**Rules:**
-1. Before modifying, always print `repr(line)` for the target lines to confirm Tab vs space
-2. Always use `encoding="utf-8"` and `newline="\n"`
-3. Always run headless verify after writing
-4. Never use sed, awk, or Bash heredoc for GDScript files
+**Delete a line:**
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> --delete <line_num>
+```
+
+**Delete a range of lines:**
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> --delete-range <start> <end>
+```
+
+**Insert a new line after line N:**
+```powershell
+python D:\AITools\godot-watch\tools\patch_gd.py <file> --insert-after <line_num> "<new_content>"
+```
+
+### Step 3 — Verify (automatic)
+`patch_gd.py` runs Godot headless verify automatically after every write.
+If verify fails, it prints the errors and exits with code 2 — fix before proceeding.
+
+### Why NOT sed/awk
+- `sed -i` on Windows has inconsistent `\t` escape — may silently write spaces instead of Tabs
+- `sed` on Windows may convert LF → CRLF, breaking Godot parsing
+- `patch_gd.py` enforces UTF-8 + LF on every write, guaranteed
