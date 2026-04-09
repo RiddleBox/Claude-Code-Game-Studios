@@ -171,13 +171,30 @@ func _is_point_on_character_interactive(pos: Vector2) -> bool:
 		print("[F1] WARNING: character_sprite is null, cannot check point")
 		return false
 
-	# 获取精灵矩形（相对于父节点F1）
-	var sprite_rect = character_sprite.get_rect()
-	var is_inside = sprite_rect.has_point(pos)
+	# 获取精灵矩形（相对于精灵自身坐标系）
+	var local_rect = character_sprite.get_rect()
+
+	# 将矩形转换到父节点（F1）坐标系
+	# 需要考虑精灵的位置、缩放和旋转
+	var sprite_transform = character_sprite.get_transform()
+	var sprite_position = character_sprite.position
+	var sprite_scale = character_sprite.scale
+
+	# 应用变换：将局部矩形点转换到父节点坐标系
+	# 简化：矩形中心在精灵位置，大小按缩放调整
+	var rect_in_parent = Rect2(
+		sprite_position - (local_rect.size * sprite_scale) / 2.0,  # 左上角
+		local_rect.size * sprite_scale                            # 缩放后的大小
+	)
+
+	var is_inside = rect_in_parent.has_point(pos)
 
 	# 调试信息
-	print("[F1] Point check - Click pos: ", pos, " Sprite rect: ", sprite_rect, " Result: ", is_inside)
-	print("[F1] Sprite position: ", character_sprite.position, " Scale: ", character_sprite.scale)
+	if is_inside:
+		print("[F1] Click detected on character at position: ", pos)
+	else:
+		# 只在调试时输出详细信息
+		pass  # 不输出未命中的详细信息
 
 	return is_inside
 
@@ -286,14 +303,14 @@ func _on_mouse_exited_window() -> void:
 		state_machine.on_mouse_exited_window()
 
 func _input(event: InputEvent) -> void:
-	print("[F1] Input event received: ", event)
+	# 只处理鼠标按钮事件
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				# 判断是否点在角色身上 (像素级判定由 GDExtension 处理)
-				var click_pos = get_local_mouse_position()
-				print("[F1] Mouse click detected - Local position: ", click_pos)
-				if _is_point_on_character_interactive(click_pos):
+				var local_pos = get_local_mouse_position()
+				print("[F1] Mouse click detected - Local: ", local_pos, " Global: ", get_global_mouse_position(), " Screen: ", DisplayServer.mouse_get_position())
+				if _is_point_on_character_interactive(local_pos):
 					is_dragging = true
 					# 计算鼠标位置与窗口位置的偏移量
 					var mouse_screen_pos = DisplayServer.mouse_get_position()
@@ -432,13 +449,7 @@ func _setup_character_sprite() -> void:
 	character_sprite.z_index = 1  # 确保在前景渲染
 
 	# 调试信息
-	print("[F1] Character sprite properties:")
-	print("[F1]   Window size: ", window_size)
-	print("[F1]   Position (center): ", character_sprite.position)
-	print("[F1]   Scale: ", character_sprite.scale)
-	print("[F1]   Texture size: ", texture.get_size() if texture else "No texture")
-	print("[F1]   Visible: ", character_sprite.visible)
-	print("[F1]   Modulate: ", character_sprite.modulate)
+		print("[F1] Character sprite initialized - Position: ", character_sprite.position, " Scale: ", character_sprite.scale)
 
 	# 添加调试矩形（验证渲染）
 	if _debug_rect == null:

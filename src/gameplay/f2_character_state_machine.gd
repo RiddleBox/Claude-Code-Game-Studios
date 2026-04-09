@@ -273,11 +273,6 @@ func _process_idle_state(delta: float) -> void:
 
 		# 重置计时器
 		_state_timer = 0.0
-	else:
-		# 调试输出：每5秒打印一次计时器状态
-		if int(_state_timer) % 5 == 0 and int(_state_timer - delta) % 5 != 0:
-			_print_debug("[F2] Idle timer: %s/%s" % [_state_timer, IDLE_FIDGET_INTERVAL])
-
 func _process_interacting_state(delta: float) -> void:
 	# 检查互动超时 (INTERACTING_TIMEOUT)
 	if _state_timer >= INTERACTING_TIMEOUT:
@@ -288,10 +283,6 @@ func _process_interacting_state(delta: float) -> void:
 
 		# 重置计时器
 		_state_timer = 0.0
-	else:
-		# 调试输出：每秒打印一次计时器状态
-		if int(_state_timer) % 1 == 0 and int(_state_timer - delta) % 1 != 0:
-			_print_debug("[F2] Interacting timer: %s/%s" % [_state_timer, INTERACTING_TIMEOUT])
 
 func _process_attentive_state(_delta: float) -> void:
 	# 检查注意超时 (ATTENTIVE_TIMEOUT)
@@ -348,6 +339,11 @@ func _on_state_enter(new_state: CharacterState, _old_state: CharacterState) -> v
 
 	# 状态进入特殊处理
 	match new_state:
+		CharacterState.IDLE:
+			# 重置鼠标悬停计时器，避免从INTERACTING返回后立即触发ATTENTIVE
+			_mouse_hover_timer = 0.0
+			_print_debug("[F2] Entered IDLE state, reset hover timer")
+
 		CharacterState.REACTING:
 			# 重置Aria响应计时器
 			_aria_response_timer = 0.0
@@ -394,6 +390,10 @@ func update_mouse_hover(delta: float) -> void:
 ## 角色区域被点击 (由F1调用)
 func on_character_clicked() -> void:
 	_print_debug("[F2] Character clicked")
+
+	# 重置鼠标悬停计时器，点击中断悬停检测
+	_mouse_hover_timer = 0.0
+	_print_debug("[F2] Hover timer reset on click")
 
 	# 从IDLE或ATTENTIVE状态进入INTERACTING
 	if current_state == CharacterState.IDLE or current_state == CharacterState.ATTENTIVE:
