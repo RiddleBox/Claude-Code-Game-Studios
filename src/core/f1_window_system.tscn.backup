@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cp3k5x8j4y8n"]
+
+[ext_resource type="Script" path="res://src/core/f1_window_system.gd" id="1_x4y2t"]
+
+[node name="F1WindowSystem" type="Node2D"]
+script = ExtResource("1_x4y2t")
+
+[node name="CharacterSprite" type="Sprite2D" parent="."]
+position = Vector2(150, 200)
+# 占位符 icon，实际开发中需替换为角色立绘
+texture = ExtResource("res://icon.svg")

@@ -50,4 +50,5 @@
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
-- [No ADRs yet — use /architecture-decision to create one]
+- [ADR-001: F1 桌面窗口系统实现方案](docs/architecture/adr-001-desktop-window-system.md) — 混合Hook方案实现像素级点击穿透
+- [ADR-002: C8 社交圈系统的离线模拟方案](docs/architecture/adr-002-local-backtrack-simulation.md) — 本地回溯模拟方案实现离线社交演化

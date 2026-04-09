@@ -1,0 +1,25 @@
+import os
+
+# SConstruct for F1 Win32 Hook GDExtension
+
+opts = Variables()
+opts.Add(EnumVariable("target", "Build target", "debug", ["debug", "release"]))
+opts.Add(EnumVariable("platform", "Target platform", "windows", ["windows"]))
+
+env = Environment(variables=opts)
+
+# 需将 godot-cpp 放在此目录下或指定环境变量
+godot_cpp_path = "godot-cpp"
+
+env.Append(CPPPATH=["src", os.path.join(godot_cpp_path, "include"), os.path.join(godot_cpp_path, "gen", "include")])
+env.Append(LIBPATH=[os.path.join(godot_cpp_path, "bin")])
+
+if env["platform"] == "windows":
+    env.Append(CPPDEFINES=["WIN32", "_WINDOWS", "_CRT_SECURE_NO_WARNINGS"])
+    env.Append(LIBS=["user32", "gdi32", "dwmapi"])
+
+sources = Glob("src/*.cpp")
+
+target_name = "f1_win32_hook.windows." + env["target"] + ".64.dll"
+
+env.SharedLibrary("../../bin/" + target_name, sources)

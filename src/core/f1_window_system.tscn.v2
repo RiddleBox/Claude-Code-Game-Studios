@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://dwmvdg4fz4h7t"]
+
+[ext_resource type="Script" path="res://src/core/f1_window_system.gd" id="1_abcde"]
+
+[node name="F1WindowSystem" type="Node2D"]
+script = ExtResource("1_abcde")
+
+[node name="CharacterSprite" type="Sprite2D" parent="."]
+position = Vector2(150, 200)
+texture = load("res://icon.svg")

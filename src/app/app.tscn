@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://app_scene"]
+
+[ext_resource type="Script" uid="uid://app_script" path="res://src/app/app.gd" id="1_app"]
+
+[node name="App" type="Node"]
+script = ExtResource("1_app")

@@ -1,0 +1,109 @@
+[gd_scene format=3 uid="uid://cx3b4quvtf3g4"]
+
+[ext_resource type="Script" uid="uid://c37t3c75hejdr" path="res://outing_window.gd" id="1_bxb73"]
+
+[node name="OutingWindow" type="Control" unique_id=1201540258]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bxb73")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1747588016]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0862745, 0.0862745, 0.0862745, 0.8)
+
+[node name="StatusPanel" type="Panel" parent="." unique_id=220689081]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.4
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="StatusPanel" unique_id=641430667]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="StateLabel" type="Label" parent="StatusPanel/VBoxContainer" unique_id=1060942656]
+layout_mode = 2
+text = "状态: 在家"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TimeLabel" type="Label" parent="StatusPanel/VBoxContainer" unique_id=9835450]
+layout_mode = 2
+text = "时间: 00:00"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RestlessnessLabel" type="Label" parent="StatusPanel/VBoxContainer" unique_id=1679448866]
+layout_mode = 2
+text = "外出压力: 0.00"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ButtonContainer" type="HBoxContainer" parent="StatusPanel/VBoxContainer" unique_id=1418852491]
+layout_mode = 2
+alignment = 1
+
+[node name="OutButton" type="Button" parent="StatusPanel/VBoxContainer/ButtonContainer" unique_id=1172182493]
+layout_mode = 2
+text = "手动外出"
+
+[node name="ReturnButton" type="Button" parent="StatusPanel/VBoxContainer/ButtonContainer" unique_id=494899975]
+layout_mode = 2
+text = "手动归来"
+
+[node name="LogPanel" type="Panel" parent="." unique_id=769115608]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.4
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="LogText" type="RichTextLabel" parent="LogPanel" unique_id=93862226]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+text = "[等待外出事件...]"
+autowrap_mode = 1
+fit_content = false
+scroll_active = true
+scroll_following = true

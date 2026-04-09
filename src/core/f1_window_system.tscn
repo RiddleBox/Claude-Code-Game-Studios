@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://bbjccwno0rny1"]
+
+[ext_resource type="Script" uid="uid://duc8bikj3ffgl" path="res://src/core/f1_window_system.gd" id="1_b1ul3"]
+[ext_resource type="Texture2D" uid="uid://cpoqkx1qxqsby" path="res://icon.svg" id="2_hfyxa"]
+
+[node name="F1WindowSystem" type="Node2D" unique_id=560411853]
+script = ExtResource("1_b1ul3")
+
+[node name="CharacterSprite" type="Sprite2D" parent="." unique_id=1084611830]
+texture = ExtResource("2_hfyxa")
+offset = Vector2(150, 200)

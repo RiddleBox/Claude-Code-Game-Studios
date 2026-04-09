@@ -1,0 +1,347 @@
+# app/app.gd
+# 主应用控制器
+# 负责应用启动、模块管理和生命周期控制
+
+class_name App
+extends Node
+
+## 应用状态信号
+signal app_initialized(success: bool)
+signal app_started(success: bool)
+signal app_stopping()
+signal app_shutdown()
+
+## 模块加载器实例
+var _module_loader: ModuleLoader
+
+## 应用配置
+var _config: Dictionary = {}
+
+## 应用状态
+enum AppStatus {
+	BOOTING,      # 启动中
+	INITIALIZING, # 初始化中
+	RUNNING,      # 运行中
+	STOPPING,     # 停止中
+	SHUTDOWN      # 已关闭
+}
+
+var status: AppStatus = AppStatus.BOOTING
+
+## 启动时间
+var _startup_time: int = 0
+
+## 应用初始化
+func _ready() -> void:
+	_startup_time = Time.get_ticks_msec()
+	print("[App] 窗语应用启动中...")
+	print("[App] Godot版本: %s" % Engine.get_version_info()["string"])
+	print("[App] 平台: %s" % OS.get_name())
+
+	# 设置应用基本属性
+	_setup_application()
+
+	# 初始化模块加载器
+	_initialize_module_loader()
+
+	# 加载应用配置
+	_load_config()
+
+	# 注册核心模块
+	_register_core_modules()
+
+	# 初始化所有模块
+	_initialize_modules()
+
+## 设置应用基本属性
+func _setup_application() -> void:
+	# 设置进程模式
+	Engine.max_fps = 60
+	print("[App] 目标帧率: %d FPS" % Engine.max_fps)
+
+	# 设置错误处理
+	# 注意: 在Godot中，错误处理主要通过打印和信号
+	# 这里可以添加自定义错误处理器
+
+## 初始化模块加载器
+func _initialize_module_loader() -> void:
+	_module_loader = ModuleLoader.new()
+	add_child(_module_loader)
+
+	# 连接模块加载器信号
+	_module_loader.module_registered.connect(_on_module_registered)
+	_module_loader.module_initialized.connect(_on_module_initialized)
+	_module_loader.module_started.connect(_on_module_started)
+	_module_loader.module_error.connect(_on_module_error)
+	_module_loader.all_modules_initialized.connect(_on_all_modules_initialized)
+	_module_loader.all_modules_started.connect(_on_all_modules_started)
+
+	print("[App] 模块加载器已初始化")
+
+## 加载应用配置
+func _load_config() -> bool:
+	var config_path = "res://data/config/app.json"
+	if not FileAccess.file_exists(config_path):
+		print("[App] 应用配置文件不存在: %s" % config_path)
+		_config = _get_default_config()
+		return true
+
+	var file = FileAccess.open(config_path, FileAccess.READ)
+	if file == null:
+		push_error("[App] 无法打开配置文件: %s" % config_path)
+		_config = _get_default_config()
+		return false
+
+	var content = file.get_as_text()
+	file.close()
+
+	var parsed_config = JSON.parse_string(content)
+	if parsed_config == null:
+		push_error("[App] 配置文件JSON格式错误: %s" % config_path)
+		_config = _get_default_config()
+		return false
+
+	_config = parsed_config
+	print("[App] 应用配置已加载")
+	return true
+
+## 获取默认配置
+func _get_default_config() -> Dictionary:
+	return {
+		"app": {
+			"name": "窗语",
+			"version": "0.1.0",
+			"debug": true,
+			"log_level": "info"
+		},
+		"modules": {
+			"async_initialization": false,
+			"error_recovery": true,
+			"auto_reload": false
+		},
+		"performance": {
+			"target_fps": 60,
+			"memory_warning_threshold_mb": 512
+		}
+	}
+
+## 注册核心模块
+func _register_core_modules() -> void:
+	print("[App] 注册核心模块...")
+
+	# F1: 桌面窗口系统 (最高优先级)
+	_register_f1_window_system()
+
+	# F2: 角色状态机 (高优先级，依赖F1)
+	_register_f2_state_machine()
+
+	# 其他模块将在后续阶段注册
+	# TODO: 注册F3, F4, F5等模块
+
+## 注册F1窗口系统
+func _register_f1_window_system() -> void:
+	var module_class = load("res://src/core/f1_window_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载F1窗口系统模块类")
+		return
+
+	var config = _config.get("f1_window_system", {})
+	var success = _module_loader.register_module(
+		"f1_window_system",
+		module_class,
+		config,
+		[],  # 无依赖
+		[],  # 无可选依赖
+		100  # 最高优先级
+	)
+
+	if success:
+		print("[App] F1窗口系统已注册")
+	else:
+		push_error("[App] F1窗口系统注册失败")
+
+## 注册F2状态机
+func _register_f2_state_machine() -> void:
+	var module_class = load("res://src/gameplay/f2_character_state_machine.gd")
+	if not module_class:
+		push_error("[App] 无法加载F2状态机模块类")
+		return
+
+	var config = _config.get("f2_state_machine", {})
+	var success = _module_loader.register_module(
+		"f2_state_machine",
+		module_class,
+		config,
+		["f1_window_system"],  # 依赖F1
+		[],  # 无可选依赖
+		90   # 高优先级
+	)
+
+	if success:
+		print("[App] F2状态机已注册")
+	else:
+		push_error("[App] F2状态机注册失败")
+
+## 初始化所有模块
+func _initialize_modules() -> void:
+	print("[App] 初始化所有模块...")
+	status = AppStatus.INITIALIZING
+
+	var async = _config.get("modules", {}).get("async_initialization", false)
+	var success = _module_loader.initialize_all_modules(async)
+
+	if success:
+		print("[App] 所有模块初始化成功")
+	else:
+		push_error("[App] 模块初始化失败")
+		# 即使部分模块失败，仍尝试启动应用
+		# 错误恢复机制将处理失败模块
+
+	# 启动所有模块
+	_start_modules()
+
+## 启动所有模块
+func _start_modules() -> void:
+	print("[App] 启动所有模块...")
+
+	var success = _module_loader.start_all_modules()
+
+	if success:
+		status = AppStatus.RUNNING
+		var startup_time = Time.get_ticks_msec() - _startup_time
+		print("[App] 应用启动完成，耗时: %d ms" % startup_time)
+		app_started.emit(true)
+	else:
+		push_error("[App] 模块启动失败")
+		# 即使部分模块失败，应用仍可运行
+		status = AppStatus.RUNNING
+		app_started.emit(false)
+
+## 应用停止
+func stop() -> void:
+	if status == AppStatus.STOPPING or status == AppStatus.SHUTDOWN:
+		return
+
+	print("[App] 停止应用中...")
+	status = AppStatus.STOPPING
+	app_stopping.emit()
+
+	# 停止所有模块
+	_module_loader.stop_all_modules()
+
+	status = AppStatus.SHUTDOWN
+	print("[App] 应用已停止")
+
+## 应用关闭
+func shutdown() -> void:
+	if status == AppStatus.SHUTDOWN:
+		return
+
+	print("[App] 关闭应用中...")
+
+	# 关闭所有模块
+	_module_loader.shutdown_all_modules()
+
+	# 清理资源
+	_config.clear()
+
+	status = AppStatus.SHUTDOWN
+	print("[App] 应用已关闭")
+	app_shutdown.emit()
+
+## 应用退出处理
+func _exit_tree() -> void:
+	print("[App] 应用退出中...")
+	shutdown()
+
+## 获取模块加载器
+func get_module_loader() -> ModuleLoader:
+	return _module_loader
+
+## 获取模块实例
+func get_module(module_id: String) -> Node:
+	return _module_loader.get_module(module_id)
+
+## 检查模块是否就绪
+func is_module_ready(module_id: String) -> bool:
+	return _module_loader.is_module_ready(module_id)
+
+## 获取应用状态报告
+func get_status_report() -> Dictionary:
+	var module_status = _module_loader.get_all_module_status()
+	var running_modules = 0
+	var error_modules = 0
+
+	for module_id in module_status.keys():
+		var status = module_status[module_id].get("status", IModule.ModuleStatus.UNINITIALIZED)
+		if status == IModule.ModuleStatus.RUNNING:
+			running_modules += 1
+		elif status == IModule.ModuleStatus.ERROR:
+			error_modules += 1
+
+	return {
+		"app": {
+			"status": status,
+			"uptime": Time.get_ticks_msec() - _startup_time,
+			"version": _config.get("app", {}).get("version", "0.1.0")
+		},
+		"modules": {
+			"total": module_status.size(),
+			"running": running_modules,
+			"errors": error_modules,
+			"details": module_status
+		},
+		"performance": {
+			"fps": Engine.get_frames_per_second(),
+			"memory_used_mb": OS.get_static_memory_usage() / (1024.0 * 1024.0)
+		}
+	}
+
+## 重新加载模块
+func reload_module(module_id: String, new_config: Dictionary = {}) -> bool:
+	print("[App] 重新加载模块: %s" % module_id)
+	return _module_loader.reload_module(module_id, new_config)
+
+## 模块事件处理
+func _on_module_registered(module_id: String, module_name: String) -> void:
+	print("[App] 模块注册: %s (%s)" % [module_id, module_name])
+
+func _on_module_initialized(module_id: String, success: bool) -> void:
+	if success:
+		print("[App] 模块初始化成功: %s" % module_id)
+	else:
+		push_error("[App] 模块初始化失败: %s" % module_id)
+
+func _on_module_started(module_id: String, success: bool) -> void:
+	if success:
+		print("[App] 模块启动成功: %s" % module_id)
+	else:
+		push_error("[App] 模块启动失败: %s" % module_id)
+
+func _on_module_error(module_id: String, error: Dictionary) -> void:
+	push_error("[App] 模块错误: %s - %s" % [module_id, error.get("message", "Unknown error")])
+
+func _on_all_modules_initialized(success: bool) -> void:
+	if success:
+		print("[App] 所有模块初始化完成")
+	else:
+		push_error("[App] 模块初始化完成（有错误）")
+	app_initialized.emit(success)
+
+func _on_all_modules_started(success: bool) -> void:
+	if success:
+		print("[App] 所有模块启动完成")
+	else:
+		push_error("[App] 模块启动完成（有错误）")
+
+## 调试工具：打印依赖图
+func print_dependency_graph() -> void:
+	var dot = _module_loader.get_dependency_graph_viz()
+	print("[App] 依赖关系图:")
+	print(dot)
+
+## 调试工具：打印状态报告
+func print_status_report() -> void:
+	var report = get_status_report()
+	print("[App] 状态报告:")
+	print(JSON.stringify(report, "\t"))

@@ -28,14 +28,17 @@
 ## Systems Summary (22 systems)
 ### P0 MVP: F1(窗口), F2(状态机), F3(时间), F4(存档), C1(动画), C2(外出循环), Fe2(泄漏内容), Fe5(声音), P1(主界面UI)
 ### P1 垂直切片: C3(碎片), C4(事件线), C5(性格变量), Fe1(对话), Fe6(通知), P2(日志UI), P3(设置UI)
-### P2 Alpha: C6(关系值), F5(Aria接口), F6(角色上下文管理器), C7(对话记忆库), Fe3(朋友圈), Fe4(共鸣成长)
-### Future Vision: 随机角色生成、跨用户串门、创意工坊、Steam集成
+### P2 Alpha: C6(关系值), F5(Aria接口), F6(角色上下文管理器), C7(对话记忆库), C8(社交圈系统), Fe4(共鸣成长)
+### Future Vision: Fe3(朋友圈UI), 随机角色生成、跨用户串门、创意工坊、Steam集成
 
 ## Architecture Decisions
 - Aria 项目负责：语音识别、LLM调用、行为执行
 - 本项目负责：性格档案(System Prompt)、语音风格参数、对话记忆库、共鸣成长计算
 - F5 Aria接口层需要完整降级模式（无API时走预设脚本 + 屏幕玻璃世界观视觉）
 - 最高技术风险：F1 桌面窗口系统（Godot 4 透明悬浮窗未验证）
+- **架构决策记录 (ADRs)**:
+  - [ADR-001: F1 桌面窗口系统实现方案](docs/architecture/adr-001-desktop-window-system.md) — 混合Hook方案
+  - [ADR-002: C8 社交圈系统的离线模拟方案](docs/architecture/adr-002-local-backtrack-simulation.md) — 本地回溯模拟方案
 
 ## User Preferences
 - 语言：用中文交流
@@ -49,9 +52,11 @@
 - [x] 系统拆解完成（systems-index.md，22个系统）
 - [x] P0 MVP 层全部设计完成（9/9）
 - [x] P1 垂直切片层全部设计完成（7/7）：C3, C4, C5, Fe1, Fe6, P2, P3
-- [x] P2 Alpha 层部分完成（2/6）：C6, F5
-- [ ] 下一步：F6（角色上下文管理器）→ C7 → Fe3 → Fe4
+- [x] P2 Alpha 层全部设计完成（6/6）：C6, F5, F6, C7, C8, Fe4
+- [ ] 下一步：进入原型实现阶段，验证核心系统可行性
+- [ ] 架构决策记录：ADR-001（F1窗口系统）、ADR-002（C8离线模拟）
 - [ ] C6 关系值系统数值待原型阶段深入研究（见 project_c6_balance_research.md）
 
 ## Memory Files
 - `project_c6_balance_research.md` — C6 积累数值为初稿，需原型验证后调校
+- `adr-002-local-backtrack-simulation.md` — C8 离线模拟的本地回溯方案决策
