@@ -58,3 +58,21 @@ See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for full protocol and examples.
 At the start of every conversation, read `.claude/memory/MEMORY.md` to restore project context, design progress, and user preferences. This file is tracked by git and is the authoritative memory source across all machines.
 
 Additional memory files are listed in `.claude/memory/MEMORY.md`.
+
+## Mandatory Verification After Code Changes
+
+After writing or editing **any** `.gd` or `.tscn` file, you MUST verify before marking the task done:
+
+```powershell
+# 1. Refresh import cache (required when .tscn files change)
+godot --path <project_root> --headless --import
+
+# 2. Verify — zero output means pass
+godot --path <project_root> --headless --quit 2>&1 | Where-Object { $_ -match "^(ERROR|SCRIPT ERROR|WARNING)" }
+```
+
+**Rules:**
+- Zero output = ✅ pass. Any `SCRIPT ERROR` or `ERROR` = ❌ fix before proceeding.
+- Warnings treated as errors (same as Godot project settings).
+- If Godot is unavailable, mark file as `⚠️ UNVERIFIED` in `production/session-state/active.md` and stop — do NOT mark the task complete.
+- **If the Edit tool fails twice on the same location: stop and report to user. Do NOT fall back to Bash/sed** — sed bypasses verification and silently introduces indent errors.
