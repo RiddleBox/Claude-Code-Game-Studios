@@ -137,12 +137,12 @@ def run_godot_verify(project_path: str) -> bool:
     errors = [l for l in output.splitlines() if l.startswith(("ERROR", "SCRIPT ERROR"))]
 
     if errors:
-        print("❌ 验证失败:")
+        print("[FAIL] 验证失败:")
         for e in errors:
             print(f"   {e}")
         return False
     else:
-        print("✅ 验证通过（0 SCRIPT ERROR）")
+        print("[OK] 验证通过（0 SCRIPT ERROR）")
         return True
 
 
@@ -226,12 +226,12 @@ def main():
 
     if modified:
         write_file(args.file, lines)
-        print(f"\n✅ 已写入: {args.file}")
+        print(f"\n[OK] 已写入: {args.file}")
 
         if not args.no_verify:
             ok = run_godot_verify(args.project)
             if not ok:
-                print("\n⚠️  文件已写入但验证失败，请检查上方错误信息")
+                print("\n[WARN] 文件已写入但验证失败，请检查上方错误信息")
                 sys.exit(2)
 
 
