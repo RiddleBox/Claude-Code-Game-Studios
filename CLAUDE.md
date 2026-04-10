@@ -82,15 +82,21 @@ godot --path <project_root> --headless --quit 2>&1 | Where-Object { $_ -match "^
 GDScript files use Tab indentation. The Edit tool requires byte-perfect `old_string` matching.
 Any Tab/space mismatch or `\r\n` vs `\n` difference causes silent failure.
 
+**BEFORE any Edit on a .gd file: always inspect the target lines first.**
+```powershell
+python tools/patch_gd.py <file> --inspect <start_line> <end_line> --no-verify
+```
+If the `repr()` output doesn't match what you plan to put in `old_string` exactly — use `patch_gd.py` directly instead of Edit. Do not attempt Edit and then fix; inspect first, decide once.
+
 **When Edit fails, run these commands — copy and adapt, do not improvise:**
 
 ### Step 1 — Inspect target lines (always do this first)
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> --inspect <start_line> <end_line> --no-verify
+python tools/patch_gd.py <file> --inspect <start_line> <end_line> --no-verify
 ```
 Example:
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py src\core\f3_time_system\f3_time_system.gd --inspect 120 135 --no-verify
+python tools/patch_gd.py src\core\f3_time_system\f3_time_system.gd --inspect 120 135 --no-verify
 ```
 This prints `repr()` of each line so you can see exact Tab/space characters before touching anything.
 
@@ -98,31 +104,31 @@ This prints `repr()` of each line so you can see exact Tab/space characters befo
 
 **Replace a single line:**
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> <line_num> "<new_content>"
+python tools/patch_gd.py <file> <line_num> "<new_content>"
 ```
 Use `\t` for Tab in `<new_content>`. Example:
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py src\core\f3_time_system\f3_time_system.gd 125 "\t\tvar save_success = _save_last_timestamp_to_f4()"
+python tools/patch_gd.py src\core\f3_time_system\f3_time_system.gd 125 "\t\tvar save_success = _save_last_timestamp_to_f4()"
 ```
 
 **Replace multiple lines at once:**
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> --multi "{\"125\": \"\t\tvar x = 1\", \"126\": \"\t\tif x:\"}"
+python tools/patch_gd.py <file> --multi "{\"125\": \"\t\tvar x = 1\", \"126\": \"\t\tif x:\"}"
 ```
 
 **Delete a line:**
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> --delete <line_num>
+python tools/patch_gd.py <file> --delete <line_num>
 ```
 
 **Delete a range of lines:**
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> --delete-range <start> <end>
+python tools/patch_gd.py <file> --delete-range <start> <end>
 ```
 
 **Insert a new line after line N:**
 ```powershell
-python D:\AITools\godot-watch\tools\patch_gd.py <file> --insert-after <line_num> "<new_content>"
+python tools/patch_gd.py <file> --insert-after <line_num> "<new_content>"
 ```
 
 ### Step 3 — Verify (automatic)
