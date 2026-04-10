@@ -111,7 +111,7 @@ func start() -> bool:
 	return true
 
 ## IModule.stop() 实现
-func stop() -> void:
+func stop():
 	print("[F3] 停止时间/节奏系统...")
 	status = IModule.ModuleStatus.STOPPING
 
@@ -128,7 +128,7 @@ func stop() -> void:
 	else:
 		print("[F3] 警告: 时间戳保存到F4失败")
 ## IModule.shutdown() 实现
-	func shutdown() -> void:
+func shutdown():
 	print("[F3] 关闭时间/节奏系统...")
 
 	# 清理资源
@@ -250,7 +250,7 @@ func _calculate_offline_minutes(current_timestamp: int) -> float:
 	return minutes_diff
 
 ## 开始补算离线进度
-	func _start_catching_up() -> void:
+func _start_catching_up():
 	print("[F3] 开始补算离线进度...")
 
 	var current_timestamp: int = Time.get_unix_time_from_system()
@@ -299,7 +299,7 @@ func _calculate_offline_minutes(current_timestamp: int) -> float:
 	_start_normal_running()
 
 ## 开始正常运行（每分钟tick）
-	func _start_normal_running() -> void:
+func _start_normal_running():
 	print("[F3] 开始正常运行（每分钟tick）")
 
 	if not _timer:
@@ -314,7 +314,7 @@ func _calculate_offline_minutes(current_timestamp: int) -> float:
 	print("[F3] 计时器启动，间隔 %0.1f 秒" % ONLINE_TICK_INTERVAL)
 
 ## 计时器超时回调
-func _on_timer_timeout() -> void:
+func _on_timer_timeout() :
 	var current_timestamp: int = Time.get_unix_time_from_system()
 
 	# 发出正常tick（1分钟）
@@ -328,7 +328,7 @@ func _on_timer_timeout() -> void:
 	_last_online_timestamp = current_timestamp
 
 ## 发出tick信号（统一入口）
-func _emit_tick(timestamp: int, delta_minutes: float) -> void:
+func _emit_tick(timestamp: int, delta_minutes: float) :
 	tick.emit(timestamp, delta_minutes)
 	#print("[F3] Tick: 时间戳 %d, Δ%0.1f 分钟" % [timestamp, delta_minutes])
 
@@ -357,7 +357,7 @@ func is_catching_up() -> bool:
 ## ==================== 调试工具 ====================
 
 ## 模拟时间流逝（用于测试）
-func simulate_time_passed(minutes: float) -> void:
+func simulate_time_passed(minutes: float) :
 	print("[F3] 模拟时间流逝: %0.1f 分钟" % minutes)
 
 	var current_timestamp: int = Time.get_unix_time_from_system()
@@ -375,7 +375,7 @@ func simulate_time_passed(minutes: float) -> void:
 	_last_online_timestamp = simulated_timestamp
 
 ## 重置系统状态（用于测试）
-func reset_for_testing() -> void:
+func reset_for_testing() :
 	print("[F3] 重置系统状态（测试模式）")
 
 	if _timer and _timer.is_inside_tree():

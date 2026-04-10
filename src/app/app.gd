@@ -147,6 +147,9 @@ func _register_core_modules() -> void:
 	# UI: UI框架 (中等优先级，依赖F1)
 	_register_ui_framework()
 
+	# C1: 角色动画系统 (中等优先级，依赖F2)
+	_register_c1_animation_system()
+
 	# 其他模块将在后续阶段注册
 
 ## 注册F1窗口系统

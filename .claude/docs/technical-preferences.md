@@ -88,6 +88,38 @@ _module_loader.register_module("module_id", module_class, config, deps)
 
 详见 `coding-standards.md` 中的代码示例。
 
+## File Creation Standards
+
+<!-- Enforced when creating new GDScript files to prevent encoding/indentation issues -->
+
+- **Encoding**: UTF-8 (no BOM)
+- **Line endings**: LF (Unix style)
+- **Indentation**: Tab characters only (no spaces)
+- **Function return types**: Use explicit return types (e.g., `-> bool`, `-> void`) when appropriate
+- **New file validation**: Run `python tools/patch_gd.py <file> --inspect 1 10 --no-verify` to verify format before committing
+
+**Pre-creation checklist**:
+1. Ensure editor is configured for UTF-8 encoding
+2. Ensure line endings are set to LF
+3. Use Tab for indentation (not spaces)
+4. Verify function signatures match Godot 4.6 syntax requirements
+5. Run Godot headless validation after creation
+
+**Example correct function definitions**:
+```gdscript
+func initialize(config: Dictionary = {}) -> bool:
+    # Returns bool
+    return true
+
+func shutdown() -> void:
+    # Returns void (explicit)
+    pass
+
+func _process(delta: float) -> void:
+    # Returns void (explicit)
+    pass
+```
+
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
