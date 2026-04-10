@@ -138,6 +138,9 @@ func _register_core_modules() -> void:
 	# F2: 角色状态机 (高优先级，依赖F1)
 	_register_f2_state_machine()
 
+	# F4: 存档系统 (高优先级，依赖F1)
+	_register_f4_save_system()
+
 	# F3: 时间/节奏系统 (中等优先级，可选依赖F4)
 	_register_f3_time_system()
 
@@ -423,7 +426,6 @@ func _register_f4_save_system() -> void:
 		push_error("[App] 无法实例化F4存档系统")
 		return
 
-	add_child(instance)  # 必须先加入场景树，Timer 才能正常工作
 
 	var config = _config.get("f4_save_system", {})
 	var success = _module_loader.register_module_instance(
@@ -477,3 +479,24 @@ func _cleanup_test_runner() -> void:
 		_test_runner.queue_free()
 		_test_runner = null
 		print("[App] 测试运行器已清理")
+## 注册C1角色动画系统
+func _register_c1_animation_system() -> void:
+	var module_class = load("res://src/gameplay/c1_character_animation_system/c1_character_animation_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C1角色动画系统模块类")
+		return
+
+	var config = _config.get("c1_character_animation_system", {})
+	var success = _module_loader.register_module(
+		"c1_character_animation_system",
+		module_class,
+		config,
+		["f2_state_machine"],  # 依赖F2状态机
+		[],  # 无可选依赖
+		60   # 中等优先级
+	)
+
+	if success:
+		print("[App] C1角色动画系统已注册")
+	else:
+		push_error("[App] C1角色动画系统注册失败")

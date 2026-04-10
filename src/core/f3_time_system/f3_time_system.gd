@@ -128,7 +128,7 @@ func stop() -> void:
 	else:
 		print("[F3] 警告: 时间戳保存到F4失败")
 ## IModule.shutdown() 实现
-func shutdown() -> void:
+	func shutdown() -> void:
 	print("[F3] 关闭时间/节奏系统...")
 
 	# 清理资源
@@ -250,7 +250,7 @@ func _calculate_offline_minutes(current_timestamp: int) -> float:
 	return minutes_diff
 
 ## 开始补算离线进度
-func _start_catching_up() -> void:
+	func _start_catching_up() -> void:
 	print("[F3] 开始补算离线进度...")
 
 	var current_timestamp: int = Time.get_unix_time_from_system()
@@ -299,7 +299,7 @@ func _start_catching_up() -> void:
 	_start_normal_running()
 
 ## 开始正常运行（每分钟tick）
-func _start_normal_running() -> void:
+	func _start_normal_running() -> void:
 	print("[F3] 开始正常运行（每分钟tick）")
 
 	if not _timer:
