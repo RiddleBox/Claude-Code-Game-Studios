@@ -226,13 +226,15 @@ def main():
 
     if modified:
         write_file(args.file, lines)
-        print(f"\n[OK] 已写入: {args.file}")
+        print(f"\n[MODIFIED] 已写入: {args.file}")
 
         if not args.no_verify:
             ok = run_godot_verify(args.project)
             if not ok:
                 print("\n[WARN] 文件已写入但验证失败，请检查上方错误信息")
                 sys.exit(2)
+    else:
+        print("\n[NOT MODIFIED] 无变更，文件未写入")
 
 
 if __name__ == "__main__":

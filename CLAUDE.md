@@ -86,7 +86,17 @@ Any Tab/space mismatch or `\r\n` vs `\n` difference causes silent failure.
 ```powershell
 python tools/patch_gd.py <file> --inspect <start_line> <end_line> --no-verify
 ```
-If the `repr()` output doesn't match what you plan to put in `old_string` exactly — use `patch_gd.py` directly instead of Edit. Do not attempt Edit and then fix; inspect first, decide once.
+If the `repr()` output doesn't match what you plan to put in `old_string` exactly — use
+`patch_gd.py` directly instead of Edit. Do not attempt Edit and then fix; inspect first, decide once.
+
+**exit code semantics — do NOT retry blindly:**
+```
+exit code 0  →  [MODIFIED]     file written + Godot verify passed
+exit code 1  →  tool error before file was touched → [NOT MODIFIED] in output → safe to retry
+exit code 2  →  [MODIFIED]     file written, but Godot verify FAILED → fix the GDScript error first
+```
+**If output says `[MODIFIED]`**: the file WAS written. Do not run the same patch again.
+**If output says `[NOT MODIFIED]`**: the file was NOT touched. Safe to retry with corrected args.
 
 **When Edit fails, run these commands — copy and adapt, do not improvise:**
 
