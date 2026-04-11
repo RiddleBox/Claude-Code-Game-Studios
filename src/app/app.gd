@@ -149,7 +149,7 @@ func _register_core_modules() -> void:
 
 	# C1: 角色动画系统 (中等优先级，依赖F2)
 	_register_c1_animation_system()
-
+	_register_c2_outing_return_cycle()
 	# 其他模块将在后续阶段注册
 
 ## 注册F1窗口系统
@@ -503,3 +503,24 @@ func _register_c1_animation_system() -> void:
 		print("[App] C1角色动画系统已注册")
 	else:
 		push_error("[App] C1角色动画系统注册失败")
+
+func _register_c2_outing_return_cycle() -> void:
+	var module_class = load("res://src/gameplay/c2_outing_return_cycle/c2_outing_return_cycle.gd")
+	if not module_class:
+		push_error("[App] 无法加载C2外出返回循环系统模块类")
+		return
+
+	var config = _config.get("c2_outing_return_cycle", {})
+	var success = _module_loader.register_module(
+		"c2_outing_return_cycle",
+		module_class,
+		config,
+		["f2_state_machine", "f3_time_system", "f4_save_system"],  # 依赖F2状态机、F3时间系统、F4存档系统
+		[],  # 无可选依赖
+		55   # 中等优先级，略低于C1(60)
+	)
+
+	if success:
+		print("[App] C2外出返回循环系统已注册")
+	else:
+		push_error("[App] C2外出返回循环系统注册失败")

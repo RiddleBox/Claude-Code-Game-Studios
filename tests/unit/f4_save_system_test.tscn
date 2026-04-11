@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://test_f4_save_system"]
+
+[ext_resource type="Script" path="res://tests/unit/f4_save_system_test.gd" id="1_f4_test"]
+
+[node name="F4SaveSystemTest" type="Node"]
+script = ExtResource("1_f4_test")

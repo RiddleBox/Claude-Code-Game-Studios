@@ -203,10 +203,24 @@ func is_animating() -> bool:
 ## ==================== 私有辅助方法 ====================
 
 func _setup_animation_nodes() -> void:
-	# 创建角色精灵节点
-	_sprite_node = Sprite2D.new()
-	_sprite_node.name = "CharacterSprite"
-	add_child(_sprite_node)
+	# 从F1窗口系统获取已有的CharacterSprite节点
+	var f1_module = get_parent().get_module("f1_window_system")
+	if f1_module:
+		_sprite_node = f1_module.get_node_or_null("CharacterSprite")
+		if _sprite_node:
+			print("[C1] 成功获取F1中的CharacterSprite节点")
+		else:
+			push_error("[C1] F1中不存在CharacterSprite节点")
+			#  fallback：自己创建节点
+			_sprite_node = Sprite2D.new()
+			_sprite_node.name = "CharacterSprite"
+			add_child(_sprite_node)
+	else:
+		push_error("[C1] 无法获取F1窗口系统模块")
+		# fallback：自己创建节点
+		_sprite_node = Sprite2D.new()
+		_sprite_node.name = "CharacterSprite"
+		add_child(_sprite_node)
 
 	# 创建动画播放器
 	_animation_player = AnimationPlayer.new()
@@ -214,7 +228,7 @@ func _setup_animation_nodes() -> void:
 	add_child(_animation_player)
 
 	# TODO: 加载动画资源并添加到动画播放器
-	print("[C1] 动画节点已创建")
+	print("[C1] 动画节点已设置")
 
 func _connect_to_f2() -> bool:
 	# 获取F2模块引用
@@ -235,10 +249,10 @@ func _connect_to_f2() -> bool:
 	print("[C1] 已连接到F2状态机")
 	return true
 
-func _on_f2_state_changed(new_state: String) -> void:
-	# 将F2状态字符串映射到动画状态枚举
-	var anim_state = _map_f2_state_to_animation(new_state)
-
+func _on_f2_state_changed(old_state: int, new_state: int) -> void:
+	# 将F2状态枚举转换为字符串
+	var state_string = _f2_module._state_to_string(new_state).to_lower()
+	var anim_state = _map_f2_state_to_animation(state_string)
 	# 切换动画状态
 	change_state(anim_state)
 
@@ -247,13 +261,13 @@ func _map_f2_state_to_animation(f2_state: String) -> AnimationState:
 	match f2_state:
 		"idle":
 			return AnimationState.IDLE
-		"thinking":
+		"thinking", "attentive", "reacting":
 			return AnimationState.THINKING
-		"working":
+		"working", "interacting", "performing":
 			return AnimationState.WORKING
 		"playing":
 			return AnimationState.PLAYING
-		"sleeping":
+		"sleeping", "away", "returning":
 			return AnimationState.SLEEPING
 		_:
 			push_warning("[C1] 未知F2状态: %s，默认使用IDLE" % f2_state)
