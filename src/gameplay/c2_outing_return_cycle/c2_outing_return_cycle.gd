@@ -22,6 +22,8 @@ var last_error: Dictionary = {}
 const MIN_OUTING_INTERVAL: float = 20.0  # 最小外出间隔（分钟）
 const OUTING_PROBABILITY_PER_TICK: float = 0.05  # 每次tick出发概率（5%）
 const DEFAULT_COOLDOWN_MINUTES: float = 5.0  # 默认冷却时间（分钟）
+const MIN_OUTING_DURATION: float = 10.0  # 最短外出时长（分钟）
+const MAX_OUTING_DURATION: float = 30.0  # 最长外出时长（分钟）
 
 ## ==================== 信号 ====================
 
@@ -41,6 +43,8 @@ var _last_departure_timestamp: int = 0  # 上次出发时间戳
 var _cooldown_remaining: float = 0.0  # 冷却剩余时间（分钟）
 var _is_outing_active: bool = false  # 是否正在外出
 var _outing_duration: float = 0.0  # 本次外出持续时间（分钟）
+var _target_outing_duration: float = 0.0  # 本次外出目标时长（分钟）
+var _is_returning: bool = false  # 是否正在归来状态
 
 ## ==================== IModule 接口方法 ====================
 
@@ -144,13 +148,35 @@ func _load_saved_state() -> void:
 		push_warning("[C2] F4模块不可用，使用默认状态")
 		_last_departure_timestamp = 0
 		_cooldown_remaining = 0.0
+		_is_outing_active = false
 		return
 
 	var saved_timestamp = _f4_module.load("c2.last_departure_timestamp", 0)
+	var saved_is_outing = _f4_module.load("c2.is_outing_active", false)
+	var saved_target_duration = _f4_module.load("c2.target_outing_duration", 0.0)
+
 	if saved_timestamp is int and saved_timestamp > 0:
 		_last_departure_timestamp = saved_timestamp
-		_cooldown_remaining = max(0.0, DEFAULT_COOLDOWN_MINUTES - (Time.get_unix_time_from_system() - saved_timestamp) / 60.0)
-		print("[C2] 加载存档状态: 上次出发时间戳 = %d, 冷却剩余 = %.1f 分钟" % [saved_timestamp, _cooldown_remaining])
+		var current_time = Time.get_unix_time_from_system()
+		var offline_minutes = float(current_time - saved_timestamp) / 60.0
+
+		if saved_is_outing:
+			# 上次退出时正在外出，计算离线期间的状态
+			_target_outing_duration = saved_target_duration
+			if offline_minutes >= _target_outing_duration:
+				# 离线期间已经完成外出，现在已经回家
+				_is_outing_active = false
+				_cooldown_remaining = max(0.0, DEFAULT_COOLDOWN_MINUTES - (offline_minutes - _target_outing_duration))
+				print("[C2] 离线模拟: 上次外出已完成，离线时长: %.1f 分钟，冷却剩余: %.1f 分钟" % [offline_minutes, _cooldown_remaining])
+			else:
+				# 还在外出中，继续计时
+				_is_outing_active = true
+				_outing_duration = offline_minutes
+				print("[C2] 离线模拟: 仍在外出中，已外出: %.1f 分钟，剩余预计: %.1f 分钟" % [_outing_duration, _target_outing_duration - _outing_duration])
+		else:
+			# 上次退出时在家，计算冷却剩余
+			_cooldown_remaining = max(0.0, DEFAULT_COOLDOWN_MINUTES - offline_minutes)
+			print("[C2] 加载存档状态: 上次出发时间戳 = %d, 离线时长: %.1f 分钟, 冷却剩余 = %.1f 分钟" % [saved_timestamp, offline_minutes, _cooldown_remaining])
 	else:
 		print("[C2] 首次运行，无存档状态")
 
@@ -161,7 +187,7 @@ func _connect_to_f3_tick() -> void:
 	else:
 		push_warning("[C2] F3模块缺少tick信号，无法连接")
 
-func _on_f3_tick(timestamp: int, delta_minutes: float) -> void:
+func _on_f3_tick(_timestamp: int, delta_minutes: float) -> void:
 	# 更新冷却时间
 	if _cooldown_remaining > 0:
 		_cooldown_remaining = max(0.0, _cooldown_remaining - delta_minutes)
@@ -170,6 +196,12 @@ func _on_f3_tick(timestamp: int, delta_minutes: float) -> void:
 	if not _is_outing_active:
 		if _check_departure_trigger(delta_minutes):
 			_trigger_departure()
+	else:
+		# 正在外出状态，累计外出时长
+		_outing_duration += delta_minutes
+		# 检查是否到了归来时间
+		if _outing_duration >= _target_outing_duration:
+			_trigger_return()
 
 func _check_departure_trigger(delta_minutes: float) -> bool:
 	if _cooldown_remaining > 0:
@@ -185,17 +217,64 @@ func _check_departure_trigger(delta_minutes: float) -> bool:
 func _trigger_departure() -> void:
 	_last_departure_timestamp = Time.get_unix_time_from_system()
 	_is_outing_active = true
+	_is_returning = false
 	_current_state = "away"
+	_outing_duration = 0.0
+	# 生成随机外出时长
+	_target_outing_duration = randf_range(MIN_OUTING_DURATION, MAX_OUTING_DURATION)
 
 	# 保存状态到F4
 	if _f4_module and _f4_module.has_method("save"):
 		_f4_module.save("c2.last_departure_timestamp", _last_departure_timestamp)
+		_f4_module.save("c2.is_outing_active", _is_outing_active)
+		_f4_module.save("c2.target_outing_duration", _target_outing_duration)
 
-	print("[C2] 外出触发！开始外出状态")
+	print("[C2] 外出触发！开始外出状态，预计时长: %.1f 分钟" % _target_outing_duration)
 	departure_triggered.emit("normal_departure")
 
 	# 尝试通过F2状态机
 	if _f2_module and _f2_module.has_method("request_departure"):
 		_f2_module.request_departure()
+		# 连接F2的反馈信号
+		_f2_module.departure_accepted.connect(_on_departure_accepted)
+		_f2_module.departure_declined.connect(_on_departure_declined)
 	else:
 		push_warning("[C2] 无法通过F2请求状态变化")
+func _trigger_return() -> void:
+	_is_returning = true
+	_current_state = "returning"
+
+	print("[C2] 外出结束，开始归来！本次外出时长: %.1f 分钟" % _outing_duration)
+	return_triggered.emit()
+
+	# 请求F2切换到归来状态
+	if _f2_module and _f2_module.has_method("request_return"):
+		_f2_module.request_return()
+
+	# 延迟1秒后切换到home状态（模拟归来动画）
+	await get_tree().create_timer(1.0).timeout
+	_on_return_complete()
+
+func _on_return_complete() -> void:
+	_is_outing_active = false
+	_is_returning = false
+	_current_state = "home"
+	_outing_duration = 0.0
+	_cooldown_remaining = DEFAULT_COOLDOWN_MINUTES
+
+	# 保存状态到F4
+	if _f4_module and _f4_module.has_method("save"):
+		_f4_module.save("c2.is_outing_active", _is_outing_active)
+
+	print("[C2] 归来完成，进入冷却状态，冷却时长: %.1f 分钟" % _cooldown_remaining)
+	state_changed.emit("home")
+
+func _on_departure_accepted() -> void:
+	print("[C2] F2接受外出请求，外出生效")
+	departure_accepted.emit()
+
+func _on_departure_declined() -> void:
+	print("[C2] F2拒绝外出请求，取消本次外出")
+	_is_outing_active = false
+	_current_state = "home"
+	departure_declined.emit("F2状态不允许")

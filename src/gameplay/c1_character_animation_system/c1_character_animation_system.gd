@@ -227,8 +227,7 @@ func _setup_animation_nodes() -> void:
 	_animation_player.name = "AnimationPlayer"
 	add_child(_animation_player)
 
-	# TODO: 加载动画资源并添加到动画播放器
-	print("[C1] 动画节点已设置")
+	print("[C1] 动画节点已设置（占位符模式）")
 
 func _connect_to_f2() -> bool:
 	# 获取F2模块引用
@@ -249,7 +248,7 @@ func _connect_to_f2() -> bool:
 	print("[C1] 已连接到F2状态机")
 	return true
 
-func _on_f2_state_changed(old_state: int, new_state: int) -> void:
+func _on_f2_state_changed(_old_state: int, new_state: int) -> void:
 	# 将F2状态枚举转换为字符串
 	var state_string = _f2_module._state_to_string(new_state).to_lower()
 	var anim_state = _map_f2_state_to_animation(state_string)
@@ -278,7 +277,7 @@ func _play_animation(state: AnimationState, mode: CompositionMode) -> void:
 	var anim_name = _get_animation_name(state, mode)
 
 	if not _animation_player.has_animation(anim_name):
-		push_error("[C1] 动画不存在: %s" % anim_name)
+		print("[C1] 使用占位符动画（无实际资源）: %s" % anim_name)
 		return
 
 	# 播放动画
@@ -290,6 +289,8 @@ func _play_animation(state: AnimationState, mode: CompositionMode) -> void:
 
 	# 监听动画完成
 	# 注意：Godot AnimationPlayer 的 animation_finished 信号在动画播放完成时触发
+	if _animation_player.animation_finished.is_connected(_on_animation_finished):
+		_animation_player.animation_finished.disconnect(_on_animation_finished)
 	_animation_player.animation_finished.connect(_on_animation_finished, CONNECT_ONE_SHOT)
 
 func _get_animation_name(state: AnimationState, mode: CompositionMode) -> String:

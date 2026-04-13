@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "version": "1.0",
+    "description": "默认对话配置文件",
+    "update_time": "2026-04-12"
+  },
+  "idle_dialogues": [
+    {
+      "content": "今天天气真好~",
+      "style": 3,
+      "weight": 10
+    },
+    {
+      "content": "你在忙什么呢？",
+      "style": 0,
+      "weight": 10
+    },
+    {
+      "content": "有点无聊，要不要出去走走？",
+      "style": 1,
+      "weight": 8
+    },
+    {
+      "content": "工作别太累啦，注意休息~",
+      "style": 0,
+      "weight": 10
+    },
+    {
+      "content": "好期待今天会有什么有趣的事~",
+      "style": 3,
+      "weight": 9
+    },
+    {
+      "content": "坐太久啦，起来活动活动吧？",
+      "style": 0,
+      "weight": 7
+    },
+    {
+      "content": "喝水了吗？记得多喝水哦~",
+      "style": 0,
+      "weight": 8
+    },
+    {
+      "content": "你说今天晚饭吃什么好呢？",
+      "style": 1,
+      "weight": 6
+    }
+  ],
+  "event_dialogues": {
+    "outing_start": [
+      {
+        "content": "我出门啦，很快回来~",
+        "style": 3,
+        "weight": 10
+      },
+      {
+        "content": "出去散散步，一会见！",
+        "style": 0,
+        "weight": 8
+      },
+      {
+        "content": "我去外面逛逛，很快就回来哦~",
+        "style": 3,
+        "weight": 7
+      }
+    ],
+    "outing_return": [
+      {
+        "content": "我回来啦！外面好热闹~",
+        "style": 3,
+        "weight": 10
+      },
+      {
+        "content": "回来啦，今天玩得很开心~",
+        "style": 3,
+        "weight": 8
+      },
+      {
+        "content": "我回来啦，给你带了小礼物哦~",
+        "style": 3,
+        "weight": 5
+      },
+      {
+        "content": "哎呀，外面风好大，差点被吹走了~",
+        "style": 2,
+        "weight": 4
+      }
+    ],
+    "mouse_enter": [
+      {
+        "content": "呀，你摸到我啦~",
+        "style": 2,
+        "weight": 10
+      },
+      {
+        "content": "哈喽~",
+        "style": 3,
+        "weight": 8
+      },
+      {
+        "content": "怎么啦，要和我玩吗？",
+        "style": 0,
+        "weight": 7
+      }
+    ],
+    "mouse_click": [
+      {
+        "content": "哎呀，别戳我~",
+        "style": 2,
+        "weight": 10
+      },
+      {
+        "content": "怎么啦，有事吗？",
+        "style": 0,
+        "weight": 8
+      },
+      {
+        "content": "呜，戳得我脸都变形啦~",
+        "style": 4,
+        "weight": 5
+      },
+      {
+        "content": "再戳我我就生气啦！",
+        "style": 2,
+        "weight": 4
+      }
+    ],
+    "state_idle": [
+      {
+        "content": "好闲啊，有没有什么好玩的？",
+        "style": 1,
+        "weight": 8
+      },
+      {
+        "content": "发会呆~",
+        "style": 1,
+        "weight": 6
+      }
+    ],
+    "state_sleeping": [
+      {
+        "content": "Zzzz...",
+        "style": 1,
+        "weight": 10
+      }
+    ]
+  }
+}

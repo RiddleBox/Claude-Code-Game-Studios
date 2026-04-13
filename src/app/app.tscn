@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://app_scene"]
+[gd_scene format=3 uid="uid://ba5l7ehb7nb7h"]
 
 [ext_resource type="Script" uid="uid://cxyrh2t4ha6r3" path="res://src/app/app.gd" id="1_app"]
 
-[node name="App" type="Node"]
+[node name="App" type="Node" unique_id=527839982]
 script = ExtResource("1_app")

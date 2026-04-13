@@ -34,6 +34,7 @@ signal save_completed(success: bool, key_count: int)
 signal load_completed(success: bool, key_count: int)
 signal auto_save_triggered()
 signal save_file_corrupted(recovered: bool)
+signal before_save()  # 存档前触发，各模块可以在此保存数据
 
 ## 私有变量
 var _save_data: Dictionary = {}
@@ -349,6 +350,9 @@ func _save_to_disk() -> bool:
 		return false
 
 	_save_in_progress = true
+
+	# 触发存档前信号，让各模块保存数据
+	before_save.emit()
 
 	# 更新元数据
 	_update_metadata()
