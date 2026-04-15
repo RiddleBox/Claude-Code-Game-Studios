@@ -1,0 +1,55 @@
+[
+  {
+    "event_id": "br_001",
+    "trigger_weight": 1.0,
+    "personality_weights": { "curiosity": 0.7, "boldness": 0.5 },
+    "variants": [
+      {
+        "variant_id": "br_001_v1",
+        "personality_weights": { "boldness": 0.9 },
+        "fragments": [
+          {
+            "content_id": "br_001_v1_f1",
+            "type": "scene",
+            "text": "它说它插手了一件本来跟它没关系的事。说完补了一句：「但那时候不插手的话，后来会后悔的。」",
+            "emotion_tag": "combat",
+            "ref_id": ""
+          }
+        ]
+      },
+      {
+        "variant_id": "br_001_v2",
+        "personality_weights": { "melancholy": 0.8, "warmth": 0.4 },
+        "fragments": [
+          {
+            "content_id": "br_001_v2_f1",
+            "type": "emotion",
+            "text": "它看起来有点心不在焉。问它怎么了，它说没事，就是在想某件很久以前的事。",
+            "emotion_tag": "peaceful",
+            "ref_id": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "br_002",
+    "trigger_weight": 0.8,
+    "personality_weights": { "warmth": 0.8 },
+    "variants": [
+      {
+        "variant_id": "br_002_v1",
+        "personality_weights": { "warmth": 0.9 },
+        "fragments": [
+          {
+            "content_id": "br_002_v1_f1",
+            "type": "dialogue",
+            "text": "「今天碰到了一个很像我以前认识的人，」它笑了笑，「不过肯定不是同一个人啦。」",
+            "emotion_tag": "peaceful",
+            "ref_id": ""
+          }
+        ]
+      }
+    ]
+  }
+]

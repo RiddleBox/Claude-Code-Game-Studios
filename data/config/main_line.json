@@ -1,0 +1,75 @@
+{
+  "line_id": "main_001",
+  "nodes": [
+    {
+      "node_id": "ml_001_n1",
+      "unlock_conditions": {
+        "min_fragments": 0,
+        "min_online_minutes": 0
+      },
+      "variants": [
+        {
+          "variant_id": "ml_001_n1_v1",
+          "personality_weights": { "curiosity": 0.8, "boldness": 0.2 },
+          "fragments": [
+            {
+              "content_id": "ml_001_n1_v1_f1",
+              "type": "scene",
+              "text": "它回来时神情有些飘忽，说在某条巷子里看见了一扇从来没开过的门，今天开着。",
+              "emotion_tag": "mystery",
+              "ref_id": ""
+            }
+          ]
+        },
+        {
+          "variant_id": "ml_001_n1_v2",
+          "personality_weights": { "warmth": 0.8, "melancholy": 0.3 },
+          "fragments": [
+            {
+              "content_id": "ml_001_n1_v2_f1",
+              "type": "dialogue",
+              "text": "「那里的人今天都在说同一件事，」它停顿了一下，「但我没听完。」",
+              "emotion_tag": "mystery",
+              "ref_id": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "node_id": "ml_001_n2",
+      "unlock_conditions": {
+        "min_fragments": 3,
+        "min_online_minutes": 30
+      },
+      "variants": [
+        {
+          "variant_id": "ml_001_n2_v1",
+          "personality_weights": { "curiosity": 0.9 },
+          "fragments": [
+            {
+              "content_id": "ml_001_n2_v1_f1",
+              "type": "dialogue",
+              "text": "「我又去了那条巷子，」它眼睛发亮，「门又关上了，但这次我在门口捡到了这个。」",
+              "emotion_tag": "mystery",
+              "ref_id": "ml_001_n1"
+            }
+          ]
+        },
+        {
+          "variant_id": "ml_001_n2_v2",
+          "personality_weights": { "warmth": 0.9 },
+          "fragments": [
+            {
+              "content_id": "ml_001_n2_v2_f1",
+              "type": "emotion",
+              "text": "它犹豫了一下，说昨天路过那里的时候，好像听见有人在叫它的名字。",
+              "emotion_tag": "peaceful",
+              "ref_id": "ml_001_n1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

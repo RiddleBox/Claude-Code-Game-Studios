@@ -1,0 +1,30 @@
+[
+  {
+    "id": "curiosity",
+    "low_label": "淡漠",
+    "high_label": "好奇",
+    "default": 0.5,
+    "display_name": "好奇心"
+  },
+  {
+    "id": "warmth",
+    "low_label": "冷静",
+    "high_label": "温暖",
+    "default": 0.5,
+    "display_name": "温度"
+  },
+  {
+    "id": "boldness",
+    "low_label": "谨慎",
+    "high_label": "大胆",
+    "default": 0.5,
+    "display_name": "胆量"
+  },
+  {
+    "id": "melancholy",
+    "low_label": "乐观",
+    "high_label": "忧郁",
+    "default": 0.5,
+    "display_name": "情绪底色"
+  }
+]

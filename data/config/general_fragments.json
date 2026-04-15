@@ -1,0 +1,37 @@
+[
+  {
+    "content_id": "general_001",
+    "type": "dialogue",
+    "text": "它今天没说什么特别的，只是安静地待着。",
+    "emotion_tag": "peaceful",
+    "personality_weights": {}
+  },
+  {
+    "content_id": "general_002",
+    "type": "scene",
+    "text": "回来时它带着点外面的寒意，似乎在窗边站了很久。",
+    "emotion_tag": "peaceful",
+    "personality_weights": { "melancholy": 0.5 }
+  },
+  {
+    "content_id": "general_003",
+    "type": "dialogue",
+    "text": "「你看，」它指着窗外，「今天的云跑得特别快。」",
+    "emotion_tag": "peaceful",
+    "personality_weights": { "curiosity": 0.6 }
+  },
+  {
+    "content_id": "general_004",
+    "type": "emotion",
+    "text": "它看起来比平时更活跃一些，似乎今天有什么好事发生。",
+    "emotion_tag": "peaceful",
+    "personality_weights": { "warmth": 0.7 }
+  },
+  {
+    "content_id": "general_005",
+    "type": "object",
+    "text": "它今天带回了一片形状很特别的叶子，说觉得你可能会喜欢。",
+    "emotion_tag": "peaceful",
+    "personality_weights": { "warmth": 0.8 }
+  }
+]

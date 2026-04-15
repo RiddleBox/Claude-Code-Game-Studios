@@ -1,0 +1,67 @@
+{
+  "scripts": [
+    {
+      "id": "action_tap_glass",
+      "text": "[轻轻敲了敲玻璃]",
+      "weight": 0.7,
+      "type": "action",
+      "context": "disconnected"
+    },
+    {
+      "id": "action_write_glass",
+      "text": "[在玻璃上写了几个字，但看不清]",
+      "weight": 0.7,
+      "type": "action",
+      "context": "disconnected"
+    },
+    {
+      "id": "action_lean_glass",
+      "text": "[靠在玻璃上发呆]",
+      "weight": 0.7,
+      "type": "action",
+      "context": "disconnected"
+    },
+    {
+      "id": "action_wave",
+      "text": "[朝你挥了挥手]",
+      "weight": 0.7,
+      "type": "action",
+      "context": "disconnected"
+    },
+    {
+      "id": "monologue_sunlight",
+      "text": "今天的阳光照得有点暖...",
+      "weight": 0.3,
+      "type": "monologue",
+      "context": "disconnected"
+    },
+    {
+      "id": "monologue_window",
+      "text": "窗外的风景好像变了一点。",
+      "weight": 0.3,
+      "type": "monologue",
+      "context": "disconnected"
+    },
+    {
+      "id": "monologue_quiet",
+      "text": "这样安静地待着，也挺好的。",
+      "weight": 0.3,
+      "type": "monologue",
+      "context": "disconnected"
+    },
+    {
+      "id": "error_signal_lost",
+      "text": "...[信号断了]",
+      "weight": 1.0,
+      "type": "error",
+      "context": "error"
+    },
+    {
+      "id": "error_connection_unstable",
+      "text": "[连接不太稳定...]",
+      "weight": 1.0,
+      "type": "error",
+      "context": "error"
+    }
+  ]
+}

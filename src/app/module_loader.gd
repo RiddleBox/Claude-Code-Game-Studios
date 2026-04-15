@@ -235,7 +235,7 @@ func _initialize_modules_sync(init_order: Array[String]) -> bool:
 			_module_status[module_id]["last_error"] = {
 				"code": -2,
 				"message": "Initialization failed",
-				"details": module.get_status()
+				"details": module.get_status() if module.has_method("get_status") else {}
 			}
 			push_error("[ModuleLoader] Module initialization failed: %s" % module_id)
 			module_error.emit(module_id, _module_status[module_id]["last_error"])
@@ -358,7 +358,7 @@ func is_module_ready(module_id: String) -> bool:
 func get_module_status(module_id: String) -> Dictionary:
 	var status = _module_status.get(module_id, {}).duplicate()
 	var module = _modules.get(module_id)
-	if module:
+	if module and module.has_method("get_status"):
 		status["module_info"] = module.get_status()
 	return status
 

@@ -81,7 +81,12 @@ func _register_core_modules() -> void:
 	# F3: 时间系统
 	_register_f3_time_system()
 	# F4: 存档系统
+	# F4: 存档系统
 	_register_f4_save_system()
+	# F5: Aria接口层
+	_register_f5_aria_interface()
+	# F6: 角色上下文管理器
+	_register_f6_character_context_manager()
 	# UI框架
 	_register_ui_framework()
 
@@ -90,6 +95,12 @@ func _register_gameplay_modules() -> void:
 	# C1: 角色动画系统 (中等优先级，依赖F2)
 	_register_c1_animation_system()
 	_register_c2_outing_return_cycle()
+	_register_c3_fragment_system()
+	_register_c4_event_line_system()
+	_register_c5_personality_variable_system()
+	_register_c6_relationship_value_system()
+	_register_c7_dialogue_memory_bank()
+	_register_c8_social_circle_system()
 
 ## 注册功能模块
 func _register_feature_modules() -> void:
@@ -99,10 +110,19 @@ func _register_feature_modules() -> void:
 	_register_fe2_memory_system()
 	# Fe3: 好感度系统
 	_register_fe3_affinity_system()
+	# Fe4: 共鸣成长系统
+	_register_fe4_resonance_growth_system()
+	# Fe5: 音频系统
 	# Fe5: 音频系统
 	_register_fe5_audio_system()
+	# Fe6: 通知提醒系统
+	_register_fe6_notification_system()
 	# P1: 主UI系统
 	_register_p1_main_ui()
+	# P2: 碎片日志UI
+	_register_p2_fragment_log_ui()
+	# P3: 设置UI
+	_register_p3_settings_ui()
 
 ## 注册F1窗口系统
 func _register_f1_window_system() -> void:
@@ -202,6 +222,56 @@ func _register_f4_save_system() -> void:
 	else:
 		push_error("[App] F4存档系统注册失败")
 
+## 注册F5 Aria接口层
+func _register_f5_aria_interface() -> void:
+	var module_class = load("res://src/foundation/f5_aria_interface/f5_aria_interface.gd")
+	if not module_class:
+		push_error("[App] 无法加载F5 Aria接口层模块类")
+		return
+
+	# F5有内部add_child（HTTPRequest、Timer），必须用register_module_instance
+	var instance = module_class.new()
+	if not instance:
+		push_error("[App] 无法实例化F5 Aria接口层")
+		return
+
+	var config = _config.get("f5_aria_interface", {})
+	var success = _module_loader.register_module_instance(
+		"f5_aria_interface",
+		instance,
+		config,
+		["f4_save_system"], # 依赖F4存档系统（保存对话历史）
+		[], # 无可选依赖
+		75 # 中等偏高优先级，介于F4(85)和UI(70)之间
+	)
+
+	if success:
+		print("[App] F5 Aria接口层已注册")
+	else:
+		push_error("[App] F5 Aria接口层注册失败")
+
+## 注册F6角色上下文管理器
+func _register_f6_character_context_manager() -> void:
+	var module_class = load("res://src/foundation/f6_character_context_manager/f6_character_context_manager.gd")
+	if not module_class:
+		push_error("[App] 无法加载F6角色上下文管理器模块类")
+		return
+
+	var config = _config.get("f6_character_context_manager", {})
+	var success = _module_loader.register_module(
+		"f6_character_context_manager",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖F4存档系统
+		["c5_personality_variable_system", "c6_relationship_value_system", "c7_dialogue_memory_bank"], # 可选依赖
+		73 # 中等优先级，介于F5(75)和UI(70)之间
+	)
+
+	if success:
+		print("[App] F6角色上下文管理器已注册")
+	else:
+		push_error("[App] F6角色上下文管理器注册失败")
+
 ## 注册UI框架
 func _register_ui_framework() -> void:
 	var module_class = load("res://src/ui/ui_module.gd")
@@ -267,6 +337,94 @@ func _register_c2_outing_return_cycle() -> void:
 		print("[App] C2外出返回循环系统已注册")
 	else:
 		push_error("[App] C2外出返回循环系统注册失败")
+
+## 注册C3碎片系统
+func _register_c3_fragment_system() -> void:
+	var module_class = load("res://src/gameplay/c3_fragment_system/c3_fragment_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C3碎片系统模块类")
+		return
+
+	var config = _config.get("c3_fragment_system", {})
+	var success = _module_loader.register_module(
+		"c3_fragment_system",
+		module_class,
+		config,
+		["f4_save_system", "f3_time_system"], # 依赖存档系统和时间系统
+		["c2_outing_return_cycle"], # 可选依赖外出返回循环
+		50 # 中等优先级
+	)
+
+	if success:
+		print("[App] C3碎片系统已注册")
+	else:
+		push_error("[App] C3碎片系统注册失败")
+
+## 注册C4事件线系统
+func _register_c4_event_line_system() -> void:
+	var module_class = load("res://src/gameplay/c4_event_line_system/c4_event_line_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C4事件线系统模块类")
+		return
+
+	var config = _config.get("c4_event_line_system", {})
+	var success = _module_loader.register_module(
+		"c4_event_line_system",
+		module_class,
+		config,
+		["f4_save_system", "f3_time_system"], # 依赖存档系统和时间系统
+		["c3_fragment_system", "c5_personality_variable_system"], # 可选依赖
+		49 # 中等优先级，介于C3(50)和C5(48)之间
+	)
+
+	if success:
+		print("[App] C4事件线系统已注册")
+	else:
+		push_error("[App] C4事件线系统注册失败")
+
+## 注册C5性格变量系统
+func _register_c5_personality_variable_system() -> void:
+	var module_class = load("res://src/gameplay/c5_personality_variable_system/c5_personality_variable_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C5性格变量系统模块类")
+		return
+
+	var config = _config.get("c5_personality_variable_system", {})
+	var success = _module_loader.register_module(
+		"c5_personality_variable_system",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖存档系统
+		[], # 无可选依赖
+		48 # 中等优先级，低于C3(50)
+	)
+
+	if success:
+		print("[App] C5性格变量系统已注册")
+	else:
+		push_error("[App] C5性格变量系统注册失败")
+
+## 注册C6关系值系统
+func _register_c6_relationship_value_system() -> void:
+	var module_class = load("res://src/gameplay/c6_relationship_value_system/c6_relationship_value_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C6关系值系统模块类")
+		return
+
+	var config = _config.get("c6_relationship_value_system", {})
+	var success = _module_loader.register_module(
+		"c6_relationship_value_system",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖存档系统
+		["c5_personality_variable_system"], # 可选依赖性格系统
+		47 # 中等优先级，低于C5(48)
+	)
+
+	if success:
+		print("[App] C6关系值系统已注册")
+	else:
+		push_error("[App] C6关系值系统注册失败")
 
 ## 注册Fe1对话系统
 func _register_fe1_dialogue_system() -> void:
@@ -380,6 +538,28 @@ func _register_fe5_audio_system() -> void:
 	else:
 		push_error("[App] Fe5音频系统注册失败")
 
+## 注册Fe6通知提醒系统
+func _register_fe6_notification_system() -> void:
+	var module_class = load("res://src/gameplay/fe6_notification_system/fe6_notification_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载Fe6通知提醒系统模块类")
+		return
+
+	var config = _config.get("fe6_notification_system", {})
+	var success = _module_loader.register_module(
+		"fe6_notification_system",
+		module_class,
+		config,
+		["f1_window_system"], # 依赖F1窗口系统
+		["c2_outing_return_cycle", "c4_event_line_system", "c5_personality_variable_system", "fe2_memory_system", "fe1_dialogue_system"], # 可选依赖
+		38 # 中等优先级，低于Fe5(40)
+	)
+
+	if success:
+		print("[App] Fe6通知提醒系统已注册")
+	else:
+		push_error("[App] Fe6通知提醒系统注册失败")
+
 ## 注册P1主UI系统
 func _register_p1_main_ui() -> void:
 	var module_class = load("res://src/ui/p1_main_ui/p1_main_ui.gd")
@@ -407,6 +587,50 @@ func _register_p1_main_ui() -> void:
 		print("[App] P1主UI系统已注册")
 	else:
 		push_error("[App] P1主UI系统注册失败")
+
+## 注册P2碎片日志UI
+func _register_p2_fragment_log_ui() -> void:
+	var module_class = load("res://src/ui/p2_fragment_log_ui/p2_fragment_log_ui.gd")
+	if not module_class:
+		push_error("[App] 无法加载P2碎片日志UI模块类")
+		return
+
+	var config = _config.get("p2_fragment_log_ui", {})
+	var success = _module_loader.register_module(
+		"p2_fragment_log_ui",
+		module_class,
+		config,
+		["ui_framework"], # 依赖UI框架
+		["c3_fragment_system", "fe3_affinity_system"], # 可选依赖
+		33 # 中等优先级，低于P1(35)
+	)
+
+	if success:
+		print("[App] P2碎片日志UI已注册")
+	else:
+		push_error("[App] P2碎片日志UI注册失败")
+
+## 注册P3设置UI
+func _register_p3_settings_ui() -> void:
+	var module_class = load("res://src/ui/p3_settings_ui/p3_settings_ui.gd")
+	if not module_class:
+		push_error("[App] 无法加载P3设置UI模块类")
+		return
+
+	var config = _config.get("p3_settings_ui", {})
+	var success = _module_loader.register_module(
+		"p3_settings_ui",
+		module_class,
+		config,
+		["ui_framework"], # 依赖UI框架
+		["f1_window_system", "fe5_audio_system"], # 可选依赖
+		30 # 中等优先级，低于P2(33)
+	)
+
+	if success:
+		print("[App] P3设置UI已注册")
+	else:
+		push_error("[App] P3设置UI注册失败")
 
 ## 初始化所有模块
 func _initialize_modules() -> void:
@@ -438,8 +662,9 @@ func _start_modules() -> void:
 		print("[App] 应用启动完成，耗时: %d ms" % startup_time)
 		app_started.emit(true)
 
-		# Sprint3验证：自动运行集成测试
-		print("[App] Sprint3验证 - 开始集成测试...")
+		# Sprint5验证：自动运行集成测试
+		print("[App] Sprint5验证 - 开始集成测试...")
+		print("[App] Sprint4验证 - 开始集成测试...")
 		call_deferred("run_integration_tests")
 	else:
 		push_error("[App] 模块启动失败")
@@ -481,8 +706,7 @@ func run_integration_tests() -> void:
 	# 清理之前的测试运行器
 	_cleanup_test_runner()
 
-	# 加载Sprint3测试脚本
-	var test_script_path = "res://tests/integration/sprint3_integration_test.gd"
+	var test_script_path = "res://tests/integration/sprint5_integration_test.gd"
 	var test_script = load(test_script_path)
 	if not test_script:
 		push_error("[App] 无法加载测试脚本: %s" % test_script_path)
@@ -541,3 +765,69 @@ func _on_module_started(module_id: String, success: bool) -> void:
 
 func _on_module_error(module_id: String, error: Dictionary) -> void:
 	push_error("[App] 模块错误: %s - %s" % [module_id, error.get("message", "未知错误")])
+
+## 注册C7对话记忆库
+func _register_c7_dialogue_memory_bank() -> void:
+	var module_class = load("res://src/gameplay/c7_dialogue_memory_bank/c7_dialogue_memory_bank.gd")
+	if not module_class:
+		push_error("[App] 无法加载C7对话记忆库模块类")
+		return
+
+	var config = _config.get("c7_dialogue_memory_bank", {})
+	var success = _module_loader.register_module(
+		"c7_dialogue_memory_bank",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖F4存档系统
+		["f3_time_system", "f5_aria_interface"], # 可选依赖
+		45 # 中等优先级，低于C6(47)
+	)
+
+	if success:
+		print("[App] C7对话记忆库已注册")
+	else:
+		push_error("[App] C7对话记忆库注册失败")
+
+## 注册C8社交圈系统
+func _register_c8_social_circle_system() -> void:
+	var module_class = load("res://src/gameplay/c8_social_circle_system/c8_social_circle_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载C8社交圈系统模块类")
+		return
+
+	var config = _config.get("c8_social_circle_system", {})
+	var success = _module_loader.register_module(
+		"c8_social_circle_system",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖F4存档系统
+		["f3_time_system"], # 可选依赖
+		43 # 中等优先级，低于C7(45)
+	)
+
+	if success:
+		print("[App] C8社交圈系统已注册")
+	else:
+		push_error("[App] C8社交圈系统注册失败")
+
+## 注册Fe4共鸣成长系统
+func _register_fe4_resonance_growth_system() -> void:
+	var module_class = load("res://src/gameplay/fe4_resonance_growth_system/fe4_resonance_growth_system.gd")
+	if not module_class:
+		push_error("[App] 无法加载Fe4共鸣成长系统模块类")
+		return
+
+	var config = _config.get("fe4_resonance_growth_system", {})
+	var success = _module_loader.register_module(
+		"fe4_resonance_growth_system",
+		module_class,
+		config,
+		["f4_save_system"], # 依赖F4存档系统
+		["f3_time_system", "c6_relationship_value_system"], # 可选依赖
+		41 # 中等优先级，低于C8(43)
+	)
+
+	if success:
+		print("[App] Fe4共鸣成长系统已注册")
+	else:
+		push_error("[App] Fe4共鸣成长系统注册失败")
