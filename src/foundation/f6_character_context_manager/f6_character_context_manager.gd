@@ -45,24 +45,33 @@ func get_module_info() -> Dictionary:
 		"optional_dependencies": ["c5_personality_variable_system", "c6_relationship_value_system", "c7_dialogue_memory_bank"]
 	}
 
-func initialize(app_context: Node) -> bool:
+func initialize(_config: Dictionary = {}) -> bool:
 	print("[F6] Initializing Character Context Manager...")
 
-	# 获取依赖模块
-	_f4_save_system = app_context.get_node_or_null("ModuleLoader/f4_save_system")
+	# 获取依赖模块（通过App节点）
+	var app = get_parent()
+	if not app or not app.has_method("get_module"):
+		push_error("[F6] Cannot get App node")
+		return false
+
+	_f4_save_system = app.get_module("f4_save_system")
 	if not _f4_save_system:
 		push_error("[F6] Required dependency f4_save_system not found")
 		return false
 
 	# 获取可选依赖
-	_c5_personality = app_context.get_node_or_null("ModuleLoader/c5_personality_variable_system")
-	_c6_relationship = app_context.get_node_or_null("ModuleLoader/c6_relationship_value_system")
-	_c7_memory = app_context.get_node_or_null("ModuleLoader/c7_dialogue_memory_bank")
+	_c5_personality = app.get_module("c5_personality_variable_system")
+	_c6_relationship = app.get_module("c6_relationship_value_system")
+	_c7_memory = app.get_module("c7_dialogue_memory_bank")
 
 	# 加载角色配置
 	_load_character_config()
 
 	print("[F6] Character Context Manager initialized")
+	return true
+
+func start() -> bool:
+	print("[F6] Starting Character Context Manager...")
 	return true
 
 func shutdown() -> void:

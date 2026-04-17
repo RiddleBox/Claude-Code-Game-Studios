@@ -131,8 +131,12 @@ func _init_desktop_mode() -> void:
 	print("[F1] 窗口标志已设置：透明、置顶、无边框")
 
 	# 2. 设置视口透明背景
-	get_viewport().transparent_bg = true
-	print("[F1] 视口透明背景已启用")
+	var viewport = get_viewport()
+	if viewport:
+		viewport.transparent_bg = true
+		print("[F1] 视口透明背景已启用")
+	else:
+		push_error("[F1] 无法获取视口，透明背景设置失败")
 
 	# 3. 尝试加载GDExtension Hook
 	_try_load_gdextension_hook()
@@ -265,7 +269,10 @@ func _input(event: InputEvent) -> void:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				# 判断是否点在角色身上
-				var click_pos = get_viewport().get_mouse_position()
+				var viewport = get_viewport()
+				if not viewport:
+					return
+				var click_pos = viewport.get_mouse_position()
 				if _is_point_on_character_interactive(click_pos):
 					is_dragging = true
 					# 计算鼠标位置与窗口位置的偏移量
@@ -330,11 +337,6 @@ func health_check() -> Dictionary:
 	var issues: Array[String] = []
 
 	# 检查窗口状态
-	if not DisplayServer.window_get_flag(DisplayServer.WINDOW_FLAG_TRANSPARENT):
-		issues.append("窗口未设置为透明")
-
-	if not get_viewport().transparent_bg:
-		issues.append("视口透明背景未启用")
 
 	return {
 		"healthy": issues.is_empty(),

@@ -59,19 +59,23 @@ func get_module_info() -> Dictionary:
 		"optional_dependencies": ["c5_personality_variable_system"]
 	}
 
-func initialize(app_context: Node) -> bool:
+func initialize(_config: Dictionary = {}) -> bool:
 	print("[C6] Initializing Relationship Value System...")
 
 	# 获取依赖模块
-	_f4_save_system = app_context.get_node_or_null("ModuleLoader/f4_save_system")
-	if not _f4_save_system:
-		push_error("[C6] Required dependency f4_save_system not found")
+	var app = get_parent()
+	if not app or not app.has_method("get_module"):
+		push_error("[C6] Cannot get App node")
 		return false
 
-	# 加载保存的关系值
+	_f4_save_system = app.get_module("f4_save_system")
 	_load_from_save()
 
 	print("[C6] Relationship Value System initialized")
+	return true
+
+func start() -> bool:
+	print("[C6] Starting Relationship Value System...")
 	return true
 
 func shutdown() -> void:

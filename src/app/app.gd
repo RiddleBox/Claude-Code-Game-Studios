@@ -180,10 +180,16 @@ func _register_f3_time_system() -> void:
 		push_error("[App] 无法加载F3时间系统模块类")
 		return
 
+	# F3内部有Timer子节点，必须用register_module_instance
+	var instance = module_class.new()
+	if not instance:
+		push_error("[App] 无法实例化F3时间系统")
+		return
+
 	var config = _config.get("f3_time_system", {})
-	var success = _module_loader.register_module(
+	var success = _module_loader.register_module_instance(
 		"f3_time_system",
-		module_class,
+		instance,
 		config,
 		[], # 无依赖
 		[], # 无可选依赖

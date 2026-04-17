@@ -56,21 +56,21 @@ func get_module_info() -> Dictionary:
 		"optional_dependencies": ["f3_time_system"]
 	}
 
-func initialize(app_context: Node) -> bool:
+func initialize(_config: Dictionary = {}) -> bool:
 	print("[C8] Initializing Social Circle System...")
 
 	# 获取依赖模块
-	_f4_save_system = app_context.get_node_or_null("ModuleLoader/f4_save_system")
+	var app = get_parent()
+	if not app or not app.has_method("get_module"):
+		push_error("[C8] Cannot get App node")
+		return false
+
+	_f4_save_system = app.get_module("f4_save_system")
 	if not _f4_save_system:
 		push_error("[C8] Required dependency f4_save_system not found")
 		return false
 
-	_f3_time_system = app_context.get_node_or_null("ModuleLoader/f3_time_system")
-
-	# 初始化角色列表
-	_init_characters()
-
-	# 加载保存的数据
+	_f3_time_system = app.get_module("f3_time_system")
 	_load_from_save()
 
 	# 创建轮换计时器
@@ -80,6 +80,10 @@ func initialize(app_context: Node) -> bool:
 	add_child(_rotation_timer)
 
 	print("[C8] Social Circle System initialized")
+	return true
+
+func start() -> bool:
+	print("[C8] Starting Social Circle System...")
 	return true
 
 func shutdown() -> void:

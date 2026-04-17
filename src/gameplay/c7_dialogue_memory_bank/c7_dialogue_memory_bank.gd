@@ -63,23 +63,32 @@ func get_module_info() -> Dictionary:
 		"optional_dependencies": ["f3_time_system", "f5_aria_interface"]
 	}
 
-func initialize(app_context: Node) -> bool:
+func initialize(_config: Dictionary = {}) -> bool:
 	print("[C7] Initializing Dialogue Memory Bank...")
 
 	# 获取依赖模块
-	_f4_save_system = app_context.get_node_or_null("ModuleLoader/f4_save_system")
+	var app = get_parent()
+	if not app or not app.has_method("get_module"):
+		push_error("[C7] Cannot get App node")
+		return false
+
+	_f4_save_system = app.get_module("f4_save_system")
 	if not _f4_save_system:
 		push_error("[C7] Required dependency f4_save_system not found")
 		return false
 
 	# 获取可选依赖
-	_f3_time_system = app_context.get_node_or_null("ModuleLoader/f3_time_system")
-	_f5_aria_interface = app_context.get_node_or_null("ModuleLoader/f5_aria_interface")
+	_f3_time_system = app.get_module("f3_time_system")
+	_f5_aria_interface = app.get_module("f5_aria_interface")
 
 	# 加载保存的数据
 	_load_from_save()
 
 	print("[C7] Dialogue Memory Bank initialized")
+	return true
+
+func start() -> bool:
+	print("[C7] Starting Dialogue Memory Bank...")
 	return true
 
 func shutdown() -> void:

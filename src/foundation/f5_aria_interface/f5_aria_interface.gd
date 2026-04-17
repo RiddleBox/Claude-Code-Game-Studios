@@ -55,7 +55,7 @@ var _f6_context_manager = null
 var _c7_memory_library = null
 
 # 降级脚本库
-var _fallback_scripts: Array[Dictionary] = []
+var _fallback_scripts: Array = []
 
 #region IModule接口实现
 
