@@ -81,7 +81,6 @@ func _register_core_modules() -> void:
 	# F3: 时间系统
 	_register_f3_time_system()
 	# F4: 存档系统
-	# F4: 存档系统
 	_register_f4_save_system()
 	# F5: Aria接口层
 	_register_f5_aria_interface()
@@ -112,7 +111,6 @@ func _register_feature_modules() -> void:
 	_register_fe3_affinity_system()
 	# Fe4: 共鸣成长系统
 	_register_fe4_resonance_growth_system()
-	# Fe5: 音频系统
 	# Fe5: 音频系统
 	_register_fe5_audio_system()
 	# Fe6: 通知提醒系统
@@ -668,9 +666,7 @@ func _start_modules() -> void:
 		print("[App] 应用启动完成，耗时: %d ms" % startup_time)
 		app_started.emit(true)
 
-		# Sprint5验证：自动运行集成测试
-		print("[App] Sprint5验证 - 开始集成测试...")
-		print("[App] Sprint4验证 - 开始集成测试...")
+		# 自动运行集成测试
 		call_deferred("run_integration_tests")
 	else:
 		push_error("[App] 模块启动失败")
@@ -678,11 +674,17 @@ func _start_modules() -> void:
 		status = AppStatus.RUNNING
 		app_started.emit(false)
 
-		# Sprint3验证：仍然尝试运行集成测试
-		print("[App] Sprint3验证 - 模块启动有错误，仍然尝试集成测试...")
+		# 仍然尝试运行集成测试
 		call_deferred("run_integration_tests")
 
-## 应用停止
+## 停止应用并清理所有资源
+##
+## 按顺序执行以下操作：
+## 1. 停止所有已注册的模块
+## 2. 清理测试运行器
+## 3. 发出shutdown信号
+##
+## 注意：如果应用已经在停止或已关闭状态，此方法会直接返回
 func stop() -> void:
 	if status == AppStatus.STOPPING or status == AppStatus.SHUTDOWN:
 		return
@@ -702,6 +704,11 @@ func stop() -> void:
 	print("[App] 应用已停止")
 
 ## 运行集成测试
+##
+## 加载并执行Sprint 5的集成测试脚本，验证所有模块的集成工作是否正常。
+## 测试运行器会被添加到场景树中，并在测试完成后自动清理。
+##
+## 注意：建议在应用处于RUNNING状态时运行测试以获得准确结果
 func run_integration_tests() -> void:
 	print("[App] 开始运行集成测试...")
 
@@ -737,18 +744,34 @@ func _cleanup_test_runner() -> void:
 		print("[App] 测试运行器已清理")
 
 ## 获取模块实例
+##
+## 通过模块ID获取已注册的模块实例。
+##
+## @param module_id 模块的唯一标识符（如"F1"、"C6"等）
+## @return 模块实例节点，如果模块未找到或加载器未初始化则返回null
 func get_module(module_id: String) -> Node:
 	if _module_loader:
 		return _module_loader.get_module(module_id)
 	return null
 
 ## 获取模块状态
+##
+## 返回所有已注册模块的状态信息字典。
+##
+## @return Dictionary 键为模块ID，值为模块状态信息（包括名称、是否初始化等）
+##         如果模块加载器未初始化则返回空字典
 func get_module_status() -> Dictionary:
 	if _module_loader:
 		return _module_loader.get_all_module_status()
 	return {}
 
 ## 重新加载模块
+##
+## 卸载并重新加载指定的模块，可选地使用新的配置参数。
+##
+## @param module_id 要重新加载的模块ID
+## @param new_config 可选的新配置字典，如果为空则使用原配置
+## @return bool 重新加载是否成功
 func reload_module(module_id: String, new_config: Dictionary = {}) -> bool:
 	print("[App] 重新加载模块: %s" % module_id)
 	return _module_loader.reload_module(module_id, new_config)
