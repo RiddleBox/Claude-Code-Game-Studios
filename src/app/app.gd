@@ -801,10 +801,16 @@ func _register_c8_social_circle_system() -> void:
 		push_error("[App] 无法加载C8社交圈系统模块类")
 		return
 
+	# C8内部有Timer子节点，必须用register_module_instance
+	var instance = module_class.new()
+	if not instance:
+		push_error("[App] 无法实例化C8社交圈系统")
+		return
+
 	var config = _config.get("c8_social_circle_system", {})
-	var success = _module_loader.register_module(
+	var success = _module_loader.register_module_instance(
 		"c8_social_circle_system",
-		module_class,
+		instance,
 		config,
 		["f4_save_system"], # 依赖F4存档系统
 		["f3_time_system"], # 可选依赖
