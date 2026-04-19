@@ -20,6 +20,7 @@
 3. **多模块initialize签名**: F6、C6、C7、C8、FE4的`initialize`函数已统一为`Dictionary`参数，并添加了`start()`函数
 4. **F5类型问题**: 已修复`_fallback_scripts`类型从`Array[Dictionary]`改为`Array`
 5. **单元测试补充**: 已为C6、C7、C8、FE4添加单元测试
+6. **代码质量改进**: 移除app.gd中的重复注释和测试代码，为公共方法添加详细文档注释
 
 ### ⚠️ 剩余待核对/未完成项
 1. **未跟踪文件**: 3个模块UID文件和`temp_f6_register.txt`需要清理
