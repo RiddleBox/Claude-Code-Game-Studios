@@ -1,0 +1,126 @@
+[gd_scene load_steps=6 format=3 uid="uid://test_shader_visual"]
+
+[ext_resource type="Shader" path="res://src/shaders/paper_overlay.gdshader" id="1"]
+[ext_resource type="Shader" path="res://src/shaders/edge_softening.gdshader" id="2"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_paper"]
+shader = ExtResource("1")
+shader_parameter/paper_texture = null
+shader_parameter/paper_strength = 0.3
+shader_parameter/paper_scale = 1.0
+shader_parameter/paper_offset = Vector2(0, 0)
+shader_parameter/paper_brightness = 1.0
+shader_parameter/paper_contrast = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_edge"]
+shader = ExtResource("2")
+shader_parameter/edge_softness = 0.05
+shader_parameter/edge_threshold = 0.1
+shader_parameter/glow_enabled = false
+shader_parameter/glow_color = Color(1, 1, 1, 0.5)
+shader_parameter/glow_size = 0.02
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_1"]
+size = Vector2(128, 128)
+
+[node name="ShaderTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.9, 0.9, 0.85, 1)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 400.0
+offset_bottom = 100.0
+text = "Shader测试场景
+
+1. 运行 tools/generate_base_textures.gd 生成纹理
+2. 将纹理拖入下方Sprite的material参数
+3. 调整Shader参数观察效果"
+autowrap_mode = 3
+
+[node name="TestSprites" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -64.0
+offset_right = 300.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="Original" type="VBoxContainer" parent="TestSprites"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="TestSprites/Original"]
+layout_mode = 2
+text = "原始"
+horizontal_alignment = 1
+
+[node name="Sprite" type="Sprite2D" parent="TestSprites/Original"]
+position = Vector2(64, 64)
+texture = SubResource("PlaceholderTexture2D_1")
+
+[node name="WithPaper" type="VBoxContainer" parent="TestSprites"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="TestSprites/WithPaper"]
+layout_mode = 2
+text = "纸质纹理"
+horizontal_alignment = 1
+
+[node name="Sprite" type="Sprite2D" parent="TestSprites/WithPaper"]
+material = SubResource("ShaderMaterial_paper")
+position = Vector2(64, 64)
+texture = SubResource("PlaceholderTexture2D_1")
+
+[node name="WithEdge" type="VBoxContainer" parent="TestSprites"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="TestSprites/WithEdge"]
+layout_mode = 2
+text = "边缘柔化"
+horizontal_alignment = 1
+
+[node name="Sprite" type="Sprite2D" parent="TestSprites/WithEdge"]
+material = SubResource("ShaderMaterial_edge")
+position = Vector2(64, 64)
+texture = SubResource("PlaceholderTexture2D_1")
+
+[node name="Instructions" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "提示：
+- 选中Sprite节点查看Inspector中的Material参数
+- 调整paper_strength控制纸质纹理强度
+- 调整edge_softness控制边缘柔化程度"
+autowrap_mode = 3
