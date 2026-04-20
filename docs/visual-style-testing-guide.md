@@ -3,10 +3,9 @@
 ## 步骤1：生成基础纹理
 
 1. 在Godot编辑器中打开项目
-2. 菜单栏选择 **File > Run**
-3. 选择 `tools/generate_base_textures.gd`
-4. 点击 **Run** 执行脚本
-5. 查看输出日志确认生成成功：
+2. 在FileSystem面板中双击打开 `tools/texture_generator.tscn`
+3. 按 **F5** 或点击右上角的 **运行当前场景** 按钮
+4. 查看输出日志确认生成成功：
    ```
    === 开始生成基础纹理 ===
    生成 tex_paper_grain.png...
@@ -17,6 +16,7 @@
 	 ✓ 已保存: res://assets/art/textures/base/tex_noise_soft.png
    === 纹理生成完成 ===
    ```
+5. 场景会自动退出
 6. 在FileSystem面板中刷新（右键 > Refresh）查看生成的纹理
 
 ## 步骤2：测试Shader效果
