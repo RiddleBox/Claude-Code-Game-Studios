@@ -197,8 +197,16 @@ func _setup_fallback_click_passthrough() -> void:
 
 func _is_point_on_character_interactive(pos: Vector2) -> bool:
 	# 检查点是否在角色交互区域内
-	# 如果 GDExtension 已加载，它会通过 WM_NCHITTEST 处理像素级判定
-	# 这里作为备份逻辑
+	# 优先使用C1模块提供的角色边界
+	var module_loader = get_parent()
+	if module_loader and module_loader.has_method("get_module"):
+		var c1_module = module_loader.get_module("c1_character_animation_system")
+		if c1_module and c1_module.has_method("get_character_bounds"):
+			var bounds = c1_module.get_character_bounds()
+			if bounds.has_area():
+				return bounds.has_point(pos)
+
+	# 回退: 使用F1场景中的静态character_sprite
 	if not character_sprite:
 		return false
 	if win32_hook:

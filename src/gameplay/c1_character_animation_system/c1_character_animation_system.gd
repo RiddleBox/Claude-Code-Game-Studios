@@ -27,32 +27,31 @@ enum CompositionMode {
 	LEANING_OUT  # 探出模式：角色部分探出窗外，动画更自由
 }
 
-## 动画状态枚举（与F2状态机对应）
+## 动画状态枚举(与F2状态机对应,与GDD对齐)
 enum AnimationState {
-	IDLE,        # 待机
-	THINKING,    # 思考
-	WORKING,     # 工作
-	PLAYING,     # 玩耍
-	SLEEPING     # 睡眠
+	IDLE,           # 待机状态
+	ATTENTIVE,      # 注意状态(抬头关注)
+	INTERACTING,    # 交互状态
+	TALKING,        # 对话状态
+	REACTING,       # 反应状态(A/B类型)
+	PERFORMING,     # 演出状态
+	AWAY,           # 离开状态(不可见)
+	RETURNING       # 归来状态
 }
 
 ## 默认动画参数
-const DEFAULT_TRANSITION_DURATION: float = 0.3  # 动画过渡时间（秒）
-const DEFAULT_BLEND_TIME: float = 0.2  # 动画混合时间（秒）
-
-## ==================== 系统状态 ====================
-
+const DEFAULT_TRANSITION_DURATION: float = 0.3  # 动画过渡时间(秒)
+const DEFAULT_BLEND_TIME: float = 0.2  # 动画混合时间(秒)
 ## 公共信号
 signal animation_changed(state: AnimationState, mode: CompositionMode)
 signal composition_mode_changed(mode: CompositionMode)
 signal animation_completed(state: AnimationState)
-
+signal animation_event(event_name: String)  # 动画关键帧事件(供Fe5音频系统订阅)
 ## 私有变量
 var _current_state: AnimationState = AnimationState.IDLE
 var _current_mode: CompositionMode = CompositionMode.INSIDE
 var _f2_module: Node = null  # F2状态机模块引用
-var _animation_player: AnimationPlayer = null  # 动画播放器节点
-var _sprite_node: Sprite2D = null  # 角色精灵节点
+var _sprite_node: AnimatedSprite2D = null  # 角色精灵节点(帧动画)
 var _is_animating: bool = false
 
 ## ==================== IModule接口方法 ====================
@@ -67,8 +66,14 @@ func initialize(config: Dictionary = {}) -> bool:
 		# TODO: 应用动画过渡时间
 		pass
 
+	# 隐藏F1场景中的静态CharacterSprite(如果存在)
+	_hide_f1_static_sprite()
+
 	# 创建动画节点（如果不存在）
 	_setup_animation_nodes()
+
+	# 连接F1点击信号
+	_connect_to_f1()
 
 	# 连接F2状态机信号
 	var connect_success = _connect_to_f2()
@@ -98,8 +103,8 @@ func stop() -> void:
 	status = IModule.ModuleStatus.STOPPING
 
 	# 停止当前动画
-	if _animation_player and _animation_player.is_playing():
-		_animation_player.stop()
+	if _sprite_node and _sprite_node.is_playing():
+		_sprite_node.stop()
 		_is_animating = false
 
 	status = IModule.ModuleStatus.STOPPED
@@ -110,10 +115,6 @@ func shutdown() -> void:
 	print("[C1] 关闭角色动画系统...")
 
 	# 清理动画资源
-	if _animation_player:
-		_animation_player.queue_free()
-		_animation_player = null
-
 	if _sprite_node:
 		_sprite_node.queue_free()
 		_sprite_node = null
@@ -148,9 +149,6 @@ func health_check() -> Dictionary:
 
 	if not _f2_module:
 		issues.append("未连接到F2状态机")
-
-	if not _animation_player:
-		issues.append("动画播放器未初始化")
 
 	if not _sprite_node:
 		issues.append("角色精灵节点未初始化")
@@ -200,34 +198,101 @@ func get_current_mode() -> CompositionMode:
 func is_animating() -> bool:
 	return _is_animating
 
+## 获取角色当前占用区域(供F1点击检测和P1 UI避让使用)
+## @return Rect2: 角色在viewport坐标系中的矩形区域
+func get_character_bounds() -> Rect2:
+	if not _sprite_node:
+		return Rect2(0, 0, 0, 0)  # 无精灵节点,返回空区域
+
+	# 获取精灵的全局位置
+	var sprite_global_pos = _sprite_node.global_position
+
+	# 获取精灵的实际尺寸(考虑缩放)
+	var base_size = Vector2(256, 256)  # 占位符基础尺寸
+	var sprite_size = base_size * _sprite_node.scale
+
+	# 考虑精灵的中心锚点(centered=true)
+	var top_left = sprite_global_pos - sprite_size / 2
+	return Rect2(top_left, sprite_size)
+
+## 获取当前构图模式(供P1查询窗框光效)
+## @return String: 构图模式名称
+func get_composition_mode() -> String:
+	return CompositionMode.keys()[_current_mode]
+
 ## ==================== 私有辅助方法 ====================
 
+## 设置动画节点(AnimatedSprite2D)
 func _setup_animation_nodes() -> void:
-	# 从F1窗口系统获取已有的CharacterSprite节点
-	var f1_module = get_parent().get_module("f1_window_system")
-	if f1_module:
-		_sprite_node = f1_module.get_node_or_null("CharacterSprite")
-		if _sprite_node:
-			print("[C1] 成功获取F1中的CharacterSprite节点")
-		else:
-			push_error("[C1] F1中不存在CharacterSprite节点")
-			#  fallback：自己创建节点
-			_sprite_node = Sprite2D.new()
-			_sprite_node.name = "CharacterSprite"
-			add_child(_sprite_node)
+	# 创建AnimatedSprite2D节点
+	_sprite_node = AnimatedSprite2D.new()
+	_sprite_node.name = "CharacterSprite"
+	_sprite_node.centered = true
+
+	# 加载SpriteFrames资源(透明背景版本)
+	var frames_path = "res://assets/art/characters/placeholder_frame/character_frames_transparent.tres"
+	var sprite_frames = load(frames_path) as SpriteFrames
+	if sprite_frames:
+		_sprite_node.sprite_frames = sprite_frames
+		print("[C1] 已加载SpriteFrames资源: ", frames_path)
 	else:
-		push_error("[C1] 无法获取F1窗口系统模块")
-		# fallback：自己创建节点
-		_sprite_node = Sprite2D.new()
-		_sprite_node.name = "CharacterSprite"
-		add_child(_sprite_node)
+		push_error("[C1] 无法加载SpriteFrames资源: ", frames_path)
 
-	# 创建动画播放器
-	_animation_player = AnimationPlayer.new()
-	_animation_player.name = "AnimationPlayer"
-	add_child(_animation_player)
+	add_child(_sprite_node)
 
-	print("[C1] 动画节点已设置（占位符模式）")
+	# 等待节点进入场景树后设置全局位置
+	await get_tree().process_frame
+
+	# 设置全局位置(屏幕中心偏下,假设1920x1080分辨率)
+	var viewport_size = get_viewport().get_visible_rect().size
+	_sprite_node.global_position = Vector2(viewport_size.x / 2, viewport_size.y * 0.6)
+
+	# 设置缩放(占位符是256x256,缩小到合适大小)
+	_sprite_node.scale = Vector2(0.5, 0.5)  # 缩小到128x128
+
+	print("[C1] AnimatedSprite2D节点已设置,全局位置: ", _sprite_node.global_position)
+
+## 隐藏F1场景中的静态CharacterSprite
+func _hide_f1_static_sprite() -> void:
+	# 获取F1模块引用
+	var f1_module = get_parent().get_module("f1_window_system")
+	if not f1_module:
+		push_warning("[C1] F1窗口系统模块不存在,跳过隐藏静态精灵")
+		return
+
+	# 查找F1场景中的CharacterSprite节点
+	var static_sprite = f1_module.get_node_or_null("CharacterSprite")
+	if static_sprite:
+		static_sprite.visible = false
+		print("[C1] 已隐藏F1静态CharacterSprite")
+	else:
+		print("[C1] F1场景中未找到CharacterSprite节点")
+
+## 连接F1点击信号
+func _connect_to_f1() -> void:
+	# 获取F1模块引用
+	var f1_module = get_parent().get_module("f1_window_system")
+	if not f1_module:
+		push_warning("[C1] F1窗口系统模块不存在,跳过连接点击信号")
+		return
+
+	# 连接character_clicked信号
+	if f1_module.has_signal("character_clicked"):
+		f1_module.character_clicked.connect(_on_character_clicked)
+		print("[C1] 已连接F1角色点击信号")
+	else:
+		push_warning("[C1] F1模块缺少character_clicked信号")
+
+## 处理角色点击事件
+func _on_character_clicked() -> void:
+	print("[C1] 角色被点击!")
+
+	# 切换到INTERACTING状态
+	change_state(AnimationState.INTERACTING)
+
+	# 通知F2状态机(如果F2支持外部触发状态切换)
+	if _f2_module and _f2_module.has_method("trigger_interaction"):
+		_f2_module.trigger_interaction()
 
 func _connect_to_f2() -> bool:
 	# 获取F2模块引用
@@ -256,59 +321,63 @@ func _on_f2_state_changed(_old_state: int, new_state: int) -> void:
 	change_state(anim_state)
 
 func _map_f2_state_to_animation(f2_state: String) -> AnimationState:
-	# 简单映射：F2状态名 -> 动画状态
+	# F2状态名 -> C1动画状态(与GDD对齐)
 	match f2_state:
 		"idle":
 			return AnimationState.IDLE
-		"thinking", "attentive", "reacting":
-			return AnimationState.THINKING
-		"working", "interacting", "performing":
-			return AnimationState.WORKING
-		"playing":
-			return AnimationState.PLAYING
-		"sleeping", "away", "returning":
-			return AnimationState.SLEEPING
+		"attentive":
+			return AnimationState.ATTENTIVE
+		"interacting":
+			return AnimationState.INTERACTING
+		"talking":
+			return AnimationState.TALKING
+		"reacting":
+			return AnimationState.REACTING
+		"performing":
+			return AnimationState.PERFORMING
+		"away":
+			return AnimationState.AWAY
+		"returning":
+			return AnimationState.RETURNING
 		_:
-			push_warning("[C1] 未知F2状态: %s，默认使用IDLE" % f2_state)
+			push_warning("[C1] 未知F2状态: %s,默认使用IDLE" % f2_state)
 			return AnimationState.IDLE
 
+## 播放指定状态和模式的动画
 func _play_animation(state: AnimationState, mode: CompositionMode) -> void:
-	# 根据状态和模式生成动画名称
-	var anim_name = _get_animation_name(state, mode)
+	if not _sprite_node:
+		push_warning("[C1] AnimatedSprite2D节点未初始化")
+		return
 
-	if not _animation_player.has_animation(anim_name):
-		print("[C1] 使用占位符动画（无实际资源）: %s" % anim_name)
+	# 获取动画名称(只使用状态名,不带模式后缀)
+	var anim_name = AnimationState.keys()[state].to_lower()
+
+	# 检查动画是否存在
+	if not _sprite_node.sprite_frames or not _sprite_node.sprite_frames.has_animation(anim_name):
+		push_warning("[C1] 动画不存在: %s" % anim_name)
 		return
 
 	# 播放动画
-	_animation_player.play(anim_name, -1, 1.0, false)
+	_sprite_node.play(anim_name)
 	_is_animating = true
 
 	print("[C1] 播放动画: %s" % anim_name)
 	animation_changed.emit(state, mode)
 
 	# 监听动画完成
-	# 注意：Godot AnimationPlayer 的 animation_finished 信号在动画播放完成时触发
-	if _animation_player.animation_finished.is_connected(_on_animation_finished):
-		_animation_player.animation_finished.disconnect(_on_animation_finished)
-	_animation_player.animation_finished.connect(_on_animation_finished, CONNECT_ONE_SHOT)
+	if not _sprite_node.animation_finished.is_connected(_on_animation_finished):
+		_sprite_node.animation_finished.connect(_on_animation_finished)
 
-func _get_animation_name(state: AnimationState, mode: CompositionMode) -> String:
-	# 动画命名模式：状态_模式
-	# 例如：idle_inside, thinking_leaning_out
-	var state_str = AnimationState.keys()[state].to_lower()
-	var mode_str = CompositionMode.keys()[mode].to_lower()
-	return "%s_%s" % [state_str, mode_str]
-
-func _on_animation_finished(anim_name: String) -> void:
+func _on_animation_finished() -> void:
 	_is_animating = false
 
+	# 获取当前播放的动画名称
+	var anim_name = _sprite_node.animation if _sprite_node else ""
+
 	# 解析动画名称获取状态
-	var parts = anim_name.split("_")
-	if parts.size() >= 1:
-		var state_str = parts[0].to_upper()
-		var state = AnimationState.get(state_str, AnimationState.IDLE)
-		animation_completed.emit(state)
+	var state_str = anim_name.to_upper()
+	var state = AnimationState.get(state_str, AnimationState.IDLE)
+	animation_completed.emit(state)
 
 	print("[C1] 动画完成: %s" % anim_name)
 
