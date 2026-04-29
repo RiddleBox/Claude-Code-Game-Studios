@@ -332,9 +332,9 @@ func _register_c2_outing_return_cycle() -> void:
 		"c2_outing_return_cycle",
 		module_class,
 		config,
-		["f2_state_machine", "f3_time_system", "f4_save_system"], # 依赖F2状态机、F3时间系统、F4存档系统
+		["f2_state_machine", "f3_time_system", "f4_save_system", "c3_fragment_system"], # 依赖F2状态机、F3时间系统、F4存档系统、C3碎片系统
 		[], # 无可选依赖
-		55 # 中等优先级，略低于C1(60)
+		45 # 低于C3(50)，确保C3先初始化
 	)
 
 	if success:

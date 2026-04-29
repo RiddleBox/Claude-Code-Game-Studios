@@ -1,0 +1,101 @@
+{
+  "metadata": {
+    "file_name": "mvp_common.json",
+    "description": "通用碎片，可在任意时间触发，用于填充日常外出内容",
+    "total_fragments": 5,
+    "created_at": "2026-04-21"
+  },
+  "fragments": [
+    {
+      "id": "frag_c01",
+      "type": "scene",
+      "content": "「今天的云很低，像是可以伸手摸到。」",
+      "tags": ["peaceful", "nature", "daily"],
+      "emotional_weight": 0.3,
+      "unlock_conditions": {
+        "min_affinity": 0,
+        "required_fragments": [],
+        "time_range": {
+          "start_hour": 6,
+          "end_hour": 18
+        }
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "日间通用场景，低情感强度，营造日常感"
+      }
+    },
+    {
+      "id": "frag_c02",
+      "type": "dialogue",
+      "content": "「路过的人说：今天天气真好啊。我点了点头。」",
+      "tags": ["peaceful", "connection", "daily"],
+      "emotional_weight": 0.2,
+      "unlock_conditions": {
+        "min_affinity": 0,
+        "required_fragments": [],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "日常对话，最低情感强度，可频繁出现"
+      }
+    },
+    {
+      "id": "frag_c03",
+      "type": "object",
+      "content": "「街角的花店今天摆出了新鲜的向日葵，很大一束。」",
+      "tags": ["warmth", "urban", "daily"],
+      "emotional_weight": 0.4,
+      "unlock_conditions": {
+        "min_affinity": 0,
+        "required_fragments": [],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "温暖的日常物件观察"
+      }
+    },
+    {
+      "id": "frag_c04",
+      "type": "emotion",
+      "content": "「走在熟悉的路上，突然觉得今天的空气闻起来不太一样。」",
+      "tags": ["peaceful", "daily", "subtle"],
+      "emotional_weight": 0.3,
+      "unlock_conditions": {
+        "min_affinity": 10,
+        "required_fragments": [],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "微妙的感知变化，日常中的小惊喜"
+      }
+    },
+    {
+      "id": "frag_c05",
+      "type": "scene",
+      "content": "「夜里的街灯把影子拉得很长，像是每个人都有一个沉默的同伴。」",
+      "tags": ["night", "urban", "loneliness", "poetic"],
+      "emotional_weight": 0.5,
+      "unlock_conditions": {
+        "min_affinity": 5,
+        "required_fragments": [],
+        "time_range": {
+          "start_hour": 18,
+          "end_hour": 6
+        }
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "夜间通用场景，带诗意的孤独感"
+      }
+    }
+  ]
+}

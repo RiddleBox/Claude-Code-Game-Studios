@@ -1,13 +1,24 @@
-[gd_scene format=3 uid="uid://bbjccwno0rny1"]
+[gd_scene load_steps=3 format=3 uid="uid://bbjccwno0rny1"]
 
 [ext_resource type="Script" uid="uid://bq4vjl7udgaxe" path="res://src/core/f1_window_system/f1_window_system.gd" id="1_b1ul3"]
 [ext_resource type="Texture2D" uid="uid://luhlage6dtvn" path="res://assets/art/backgrounds/bg_theme01_normal.png" id="2_bsujm"]
-[ext_resource type="Texture2D" uid="uid://cpoqkx1qxqsby" path="res://icon.svg" id="2_hfyxa"]
 
-[node name="F1WindowSystem" type="Node" unique_id=560411853]
+[node name="F1WindowSystem" type="Node"]
 script = ExtResource("1_b1ul3")
 
-[node name="TextureRect" type="TextureRect" parent="." unique_id=1032132464]
+[node name="BackgroundLayer" type="CanvasLayer" parent="."]
+layer = -2
+
+[node name="BackgroundContainer" type="Control" parent="BackgroundLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="BackgroundLayer/BackgroundContainer"]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -17,6 +28,58 @@ texture = ExtResource("2_bsujm")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="CharacterSprite" type="Sprite2D" parent="." unique_id=1084611830]
-texture = ExtResource("2_hfyxa")
-offset = Vector2(150, 200)
+[node name="MiddlegroundLayer" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="MiddlegroundContainer" type="Control" parent="MiddlegroundLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CharacterLayer" type="CanvasLayer" parent="."]
+layer = 0
+
+[node name="CharacterContainer" type="Control" parent="CharacterLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ForegroundLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="ForegroundContainer" type="Control" parent="ForegroundLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="UIContainer" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EffectsLayer" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="AwayOverlay" type="ColorRect" parent="EffectsLayer"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)

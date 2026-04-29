@@ -104,19 +104,15 @@ func topological_sort() -> Array[String]:
 	for module_id in _dependencies.keys():
 		deps_copy[module_id] = _dependencies[module_id].duplicate()
 
-	# 计算入度
+	# 计算入度（依赖别人的模块入度高）
 	var in_degree: Dictionary = {}
 	for module_id in deps_copy.keys():
-		in_degree[module_id] = 0
+		if not module_id in in_degree:
+			in_degree[module_id] = 0
+		# 每个依赖增加自己的入度
+		in_degree[module_id] += deps_copy[module_id].size()
 
-	for module_id in deps_copy.keys():
-		for dep_id in deps_copy[module_id]:
-			if dep_id in in_degree:
-				in_degree[dep_id] += 1
-			else:
-				in_degree[dep_id] = 1
-
-	# 初始化队列（入度为0的节点）
+	# 初始化队列（入度为0的节点，即没有依赖的模块）
 	var queue: Array[String] = []
 	for module_id in in_degree.keys():
 		if in_degree[module_id] == 0:
@@ -131,12 +127,12 @@ func topological_sort() -> Array[String]:
 		sorted_list.append(module_id)
 		visited_count += 1
 
-		# 减少依赖节点的入度
-		for dep_id in deps_copy.get(module_id, []):
-			if dep_id in in_degree:
-				in_degree[dep_id] -= 1
-				if in_degree[dep_id] == 0:
-					queue.append(dep_id)
+		# 对于所有依赖当前模块的模块，减少它们的入度
+		for other_module_id in deps_copy.keys():
+			if module_id in deps_copy[other_module_id]:
+				in_degree[other_module_id] -= 1
+				if in_degree[other_module_id] == 0:
+					queue.append(other_module_id)
 
 	# 检查是否有循环依赖
 	if visited_count != _dependencies.size():

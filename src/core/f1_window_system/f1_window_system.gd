@@ -26,6 +26,20 @@ signal mouse_entered_window()
 signal mouse_exited_window()
 signal character_clicked()
 
+## 场景层级引用
+@onready var background_layer: CanvasLayer = $BackgroundLayer
+@onready var background_container: Control = $BackgroundLayer/BackgroundContainer
+@onready var middleground_layer: CanvasLayer = $MiddlegroundLayer
+@onready var middleground_container: Control = $MiddlegroundLayer/MiddlegroundContainer
+@onready var character_layer: CanvasLayer = $CharacterLayer
+@onready var character_container: Control = $CharacterLayer/CharacterContainer
+@onready var foreground_layer: CanvasLayer = $ForegroundLayer
+@onready var foreground_container: Control = $ForegroundLayer/ForegroundContainer
+@onready var ui_layer: CanvasLayer = $UILayer
+@onready var ui_container: Control = $UILayer/UIContainer
+@onready var effects_layer: CanvasLayer = $EffectsLayer
+@onready var away_overlay: ColorRect = $EffectsLayer/AwayOverlay
+
 ## 原F1系统属性
 # C1 实现前 CharacterSprite 子节点不存在，用 get_node_or_null 避免报错
 @onready var character_sprite: Sprite2D = get_node_or_null("CharacterSprite")
@@ -106,6 +120,45 @@ func shutdown() -> void:
 
 	status = IModule.ModuleStatus.SHUTDOWN
 	print("[F1] 桌面窗口系统已关闭")
+
+## 外出状态控制
+func set_away_state(is_away: bool) -> void:
+	"""设置外出状态，控制背景变暗效果"""
+	if away_overlay:
+		away_overlay.visible = is_away
+		print("[F1] 外出状态: ", "离开" if is_away else "在家")
+
+## 背景层管理
+func add_background_element(element: Node, layer_name: String = "background") -> void:
+	"""添加背景元素到指定层"""
+	match layer_name:
+		"background":
+			if background_container:
+				background_container.add_child(element)
+				print("[F1] 添加背景元素: ", element.name)
+		"foreground":
+			if foreground_container:
+				foreground_container.add_child(element)
+				print("[F1] 添加前景元素: ", element.name)
+		"ui":
+			if ui_container:
+				ui_container.add_child(element)
+				print("[F1] 添加UI元素: ", element.name)
+		_:
+			push_warning("[F1] 未知层级: ", layer_name)
+
+func get_layer_container(layer_name: String) -> Control:
+	"""获取指定层的容器节点"""
+	match layer_name:
+		"background":
+			return background_container
+		"foreground":
+			return foreground_container
+		"ui":
+			return ui_container
+		_:
+			push_warning("[F1] 未知层级: ", layer_name)
+			return null
 
 ## IModule.reload_config() 实现
 func reload_config(new_config: Dictionary = {}) -> bool:

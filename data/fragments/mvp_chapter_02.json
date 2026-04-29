@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "file_name": "mvp_chapter_02.json",
+    "description": "第二章深化碎片，探索角色过去和情感联系",
+    "total_fragments": 5,
+    "created_at": "2026-04-21"
+  },
+  "fragments": [
+    {
+      "id": "frag_006",
+      "type": "scene",
+      "content": "「雨后的玻璃窗上有人用手指写了字，但已经模糊了，只能看出是两个字。」",
+      "tags": ["rain", "past", "connection", "mystery"],
+      "emotional_weight": 0.6,
+      "unlock_conditions": {
+        "min_affinity": 25,
+        "required_fragments": ["frag_005"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "引入'留言'和'模糊记忆'的意象"
+      }
+    },
+    {
+      "id": "frag_007",
+      "type": "dialogue",
+      "content": "「他说：有些东西不是忘了，只是不知道该怎么记起来。」",
+      "tags": ["memory", "loss", "melancholy", "philosophy"],
+      "emotional_weight": 0.7,
+      "unlock_conditions": {
+        "min_affinity": 30,
+        "required_fragments": ["frag_006"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "记忆主题的哲学性表达"
+      }
+    },
+    {
+      "id": "frag_008",
+      "type": "object",
+      "content": "「桌上有一张照片，背面写着日期，但正面已经褪色到看不清人脸了。」",
+      "tags": ["memory", "time", "loss", "foreshadow"],
+      "emotional_weight": 0.8,
+      "unlock_conditions": {
+        "min_affinity": 35,
+        "required_fragments": ["frag_003", "frag_007"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "照片作为记忆载体的失效，呼应时间主题"
+      }
+    },
+    {
+      "id": "frag_009",
+      "type": "emotion",
+      "content": "「我想起那个人的声音，但想不起脸。这让我觉得很不真实。」",
+      "tags": ["memory", "loss", "dissonance", "loneliness"],
+      "emotional_weight": 0.9,
+      "unlock_conditions": {
+        "min_affinity": 40,
+        "required_fragments": ["frag_007", "frag_008"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "角色记忆的碎片化体验，情感强度最高"
+      }
+    },
+    {
+      "id": "frag_010",
+      "type": "dialogue",
+      "content": "「她说：也许你不是在等那个人，而是在等自己想起来。」",
+      "tags": ["revelation", "memory", "connection", "hope"],
+      "emotional_weight": 0.7,
+      "unlock_conditions": {
+        "min_affinity": 45,
+        "required_fragments": ["frag_005", "frag_009"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "第二章转折点，暗示'等待'的对象可能是自己的记忆"
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "file_name": "mvp_chapter_01.json",
+    "description": "第一章引入性碎片，建立世界观和角色基调",
+    "total_fragments": 5,
+    "created_at": "2026-04-21"
+  },
+  "fragments": [
+    {
+      "id": "frag_001",
+      "type": "dialogue",
+      "content": "「他说：等你的人已经不在了。然后就走了。」",
+      "tags": ["melancholy", "past", "loss", "intro"],
+      "emotional_weight": 0.7,
+      "unlock_conditions": {
+        "min_affinity": 0,
+        "required_fragments": [],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "第一条碎片，引入'等待'和'失去'的主题"
+      }
+    },
+    {
+      "id": "frag_002",
+      "type": "scene",
+      "content": "「那条街道的尽头有一盏灯，一直在闪，像是在呼吸。」",
+      "tags": ["mysterious", "urban", "night", "intro"],
+      "emotional_weight": 0.5,
+      "unlock_conditions": {
+        "min_affinity": 5,
+        "required_fragments": [],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "建立城市夜晚的氛围感"
+      }
+    },
+    {
+      "id": "frag_003",
+      "type": "object",
+      "content": "「有人把一只旧手表放在长椅上，表盘碎了，但指针还在走。」",
+      "tags": ["time", "broken", "abandoned", "foreshadow"],
+      "emotional_weight": 0.6,
+      "unlock_conditions": {
+        "min_affinity": 10,
+        "required_fragments": ["frag_001"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "时间主题的物件象征，呼应frag_001的'等待'"
+      }
+    },
+    {
+      "id": "frag_004",
+      "type": "emotion",
+      "content": "「有一刻我突然觉得，那里的时间停了，但我还在往前走。」",
+      "tags": ["dissonance", "time", "loneliness", "intro"],
+      "emotional_weight": 0.8,
+      "unlock_conditions": {
+        "min_affinity": 15,
+        "required_fragments": ["frag_002", "frag_003"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "角色内心的时间感知错位，情感强度较高"
+      }
+    },
+    {
+      "id": "frag_005",
+      "type": "dialogue",
+      "content": "「她问我：你是不是也在等什么？我没回答。」",
+      "tags": ["connection", "past", "melancholy", "reveal"],
+      "emotional_weight": 0.7,
+      "unlock_conditions": {
+        "min_affinity": 20,
+        "required_fragments": ["frag_001", "frag_004"],
+        "time_range": null
+      },
+      "metadata": {
+        "author": "Claude",
+        "created_at": "2026-04-21",
+        "notes": "第一章收束，暗示角色也在等待某人/某事"
+      }
+    }
+  ]
+}

@@ -48,11 +48,21 @@ var _f3_time: Node = null
 ## C2 外出-归来循环引用（可选依赖）
 var _c2_outing: Node = null
 
-## 碎片存储：{fragment_id: FragmentRecord}
+## 碎片存储：{fragment_id: FragmentRecord}（玩家已获得的碎片）
 var _fragments: Dictionary = {}
 
 ## 碎片 ID 计数器
 var _fragment_counter: int = 0
+
+## 碎片池：从JSON加载的所有可用碎片 {fragment_id: FragmentDefinition}
+var _fragment_pool: Dictionary = {}
+
+## 碎片库文件路径列表
+const FRAGMENT_LIBRARY_PATHS: Array[String] = [
+	"res://data/fragments/mvp_chapter_01.json",
+	"res://data/fragments/mvp_chapter_02.json",
+	"res://data/fragments/mvp_common.json"
+]
 
 ## ==================== IModule 接口方法 ====================
 
@@ -80,11 +90,14 @@ func initialize(_config: Dictionary = {}) -> bool:
 	# 获取可选依赖模块
 	_c2_outing = app.get_module("c2_outing_return_cycle")
 
+	# 加载碎片库（JSON文件）
+	_load_fragment_library()
+
 	# 从 F4 加载数据
 	_load_from_save()
 
 	status = IModule.ModuleStatus.INITIALIZED
-	print("[C3] 碎片系统初始化完成，已加载 %d 条碎片" % _fragments.size())
+	print("[C3] 碎片系统初始化完成，碎片池 %d 条，已获得 %d 条" % [_fragment_pool.size(), _fragments.size()])
 	return true
 
 ## IModule.start() 实现
@@ -188,6 +201,110 @@ func mark_read(fragment_id: String) -> void:
 	_save_to_save()
 	print("[C3] 碎片已标记为已读: %s" % fragment_id)
 
+## 从碎片池获取可解锁的碎片列表
+## @param current_affinity: 当前亲密度
+## @param current_hour: 当前游戏内小时（0-23），null表示不限制时间
+## @return: 可解锁的碎片ID数组
+func get_unlockable_fragments(current_affinity: int = 0, current_hour: int = -1) -> Array[String]:
+	var unlockable: Array[String] = []
+
+	for frag_id in _fragment_pool.keys():
+		# 跳过已获得的碎片
+		if _fragments.has(frag_id):
+			continue
+
+		var frag_def = _fragment_pool[frag_id]
+		if not frag_def.has("unlock_conditions"):
+			unlockable.append(frag_id)
+			continue
+
+		var conditions = frag_def["unlock_conditions"]
+
+		# 检查亲密度要求
+		if conditions.has("min_affinity"):
+			var min_affinity = conditions["min_affinity"]
+			if min_affinity != null and current_affinity < min_affinity:
+				continue
+
+		# 检查前置碎片
+		if conditions.has("required_fragments"):
+			var required = conditions["required_fragments"]
+			var all_met = true
+			for req_id in required:
+				if not _fragments.has(req_id):
+					all_met = false
+					break
+			if not all_met:
+				continue
+
+		# 检查时间范围
+		if conditions.has("time_range") and current_hour >= 0:
+			var time_range = conditions["time_range"]
+			if time_range != null and time_range is Dictionary:
+				var start_hour = time_range.get("start_hour", 0)
+				var end_hour = time_range.get("end_hour", 23)
+
+				# 处理跨午夜的时间范围（如18-6表示晚上6点到早上6点）
+				if start_hour <= end_hour:
+					if current_hour < start_hour or current_hour > end_hour:
+						continue
+				else:
+					if current_hour < start_hour and current_hour > end_hour:
+						continue
+
+		unlockable.append(frag_id)
+
+	return unlockable
+
+## 从碎片池随机选择碎片
+## @param count: 要选择的数量
+## @param current_affinity: 当前亲密度
+## @param current_hour: 当前游戏内小时
+## @return: 随机选中的碎片ID数组
+func pick_random_fragments(count: int, current_affinity: int = 0, current_hour: int = -1) -> Array[String]:
+	var unlockable = get_unlockable_fragments(current_affinity, current_hour)
+	if unlockable.is_empty():
+		return []
+
+	unlockable.shuffle()
+	var picked_count = min(count, unlockable.size())
+	return unlockable.slice(0, picked_count)
+
+## 添加碎片到玩家库（从碎片池）
+## @param fragment_id: 碎片ID
+## @return: 成功返回true
+func add_fragment(fragment_id: String) -> bool:
+	if not _fragment_pool.has(fragment_id):
+		push_error("[C3] 碎片池中不存在: %s" % fragment_id)
+		return false
+
+	if _fragments.has(fragment_id):
+		push_warning("[C3] 碎片已存在: %s" % fragment_id)
+		return false
+
+	var frag_def = _fragment_pool[fragment_id]
+	var acquired_at = Time.get_unix_time_from_system()
+	if _f3_time and _f3_time.has_method("get_current_timestamp"):
+		acquired_at = _f3_time.get_current_timestamp()
+
+	# 创建碎片记录（使用新格式）
+	var fragment_record = {
+		"id": fragment_id,
+		"content": frag_def.get("content", ""),
+		"type": frag_def.get("type", "dialogue"),
+		"tags": frag_def.get("tags", []),
+		"emotional_weight": frag_def.get("emotional_weight", 0.5),
+		"acquired_at": acquired_at,
+		"is_read": false
+	}
+
+	_fragments[fragment_id] = fragment_record
+	_save_to_save()
+
+	fragments_received.emit([fragment_id])
+	print("[C3] 添加碎片: %s" % fragment_id)
+	return true
+
 ## 手动接收碎片（当 C2 不可用时使用）
 func receive_fragments(fragment_payloads: Array, outing_id: String) -> Array[String]:
 	var received_ids: Array[String] = []
@@ -205,6 +322,51 @@ func receive_fragments(fragment_payloads: Array, outing_id: String) -> Array[Str
 	return received_ids
 
 ## ==================== 私有方法 ====================
+
+## 从JSON文件加载碎片库
+func _load_fragment_library() -> void:
+	_fragment_pool.clear()
+	var total_loaded: int = 0
+
+	for path in FRAGMENT_LIBRARY_PATHS:
+		if not FileAccess.file_exists(path):
+			push_warning("[C3] 碎片库文件不存在: %s" % path)
+			continue
+
+		var file = FileAccess.open(path, FileAccess.READ)
+		if not file:
+			push_error("[C3] 无法打开碎片库文件: %s" % path)
+			continue
+
+		var json_text = file.get_as_text()
+		file.close()
+
+		var json = JSON.new()
+		var parse_result = json.parse(json_text)
+		if parse_result != OK:
+			push_error("[C3] JSON解析失败: %s (错误: %s)" % [path, json.get_error_message()])
+			continue
+
+		var data = json.get_data()
+		if not data is Dictionary or not data.has("fragments"):
+			push_error("[C3] JSON格式错误: %s (缺少fragments字段)" % path)
+			continue
+
+		var fragments = data["fragments"]
+		if not fragments is Array:
+			push_error("[C3] JSON格式错误: %s (fragments不是数组)" % path)
+			continue
+
+		for frag_def in fragments:
+			if not frag_def is Dictionary or not frag_def.has("id"):
+				push_warning("[C3] 跳过无效碎片定义: %s" % frag_def)
+				continue
+
+			var frag_id = frag_def["id"]
+			_fragment_pool[frag_id] = frag_def
+			total_loaded += 1
+
+	print("[C3] 碎片库加载完成，共 %d 条碎片定义" % total_loaded)
 
 ## 从 F4 加载数据
 func _load_from_save() -> void:
