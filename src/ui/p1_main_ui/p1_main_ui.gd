@@ -100,8 +100,18 @@ func start() -> bool:
 	# 监听各系统事件
 	_connect_system_events()
 
-	# 初始隐藏UI（通过快捷键显示）
-	_hide_ui()
+	# 显示主面板，隐藏其他面板
+	if _main_panel:
+		_main_panel.visible = true
+	if _settings_panel:
+		_settings_panel.visible = false
+	if _memory_panel:
+		_memory_panel.visible = false
+	if _affinity_panel:
+		_affinity_panel.visible = false
+
+	# 更新好感度显示
+	_update_affinity_display()
 
 	status = IModule.ModuleStatus.RUNNING
 	print("[P1] 主UI系统启动完成")
@@ -224,15 +234,117 @@ func _create_main_panel() -> void:
 	if not _ui_module:
 		return
 
-	_main_panel = Control.new()
+	_main_panel = _ui_module.create_panel()
 	_main_panel.name = "MainPanel"
-	_main_panel.size = Vector2(300, 400)
+	_main_panel.custom_minimum_size = Vector2(300, 400)
 	_main_panel.position = Vector2(20, 20)
 
-	# TODO: 使用UI框架添加主面板内容
+	# 创建内容容器
+	var content = _ui_module.create_vertical_container(12)
+	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.add_theme_constant_override("margin_left", 16)
+	content.add_theme_constant_override("margin_right", 16)
+	content.add_theme_constant_override("margin_top", 16)
+	content.add_theme_constant_override("margin_bottom", 16)
+	_main_panel.add_child(content)
 
-	_main_panel.visible = false
+	# 标题
+	var title = _ui_module.create_label("Mochi")
+	title.add_theme_font_size_override("font_size", 24)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(title)
+
+	# 分隔线
+	content.add_child(HSeparator.new())
+
+	# 好感度区域
+	var affinity_section = _create_affinity_section()
+	content.add_child(affinity_section)
+
+	# 分隔线
+	content.add_child(HSeparator.new())
+
+	# 快捷按钮区域
+	var buttons_section = _create_buttons_section()
+	content.add_child(buttons_section)
+
+	_main_panel.visible = true
 	_ui_container.add_child(_main_panel)
+	print("[P1] 主面板创建完成")
+
+## 创建好感度显示区域
+func _create_affinity_section() -> Control:
+	var section = VBoxContainer.new()
+	section.add_theme_constant_override("separation", 8)
+
+	# 标题
+	var label = _ui_module.create_label("好感度")
+	label.add_theme_font_size_override("font_size", 16)
+	section.add_child(label)
+
+	# 等级显示
+	var level_container = HBoxContainer.new()
+	section.add_child(level_container)
+
+	var level_label = _ui_module.create_label("等级:")
+	level_container.add_child(level_label)
+
+	var level_value = _ui_module.create_label("1")
+	level_value.name = "LevelValue"
+	level_value.add_theme_font_size_override("font_size", 18)
+	level_value.add_theme_color_override("font_color", Color(0.3, 0.8, 1.0))
+	level_container.add_child(level_value)
+
+	# 进度条
+	var progress_bar = ProgressBar.new()
+	progress_bar.name = "AffinityProgress"
+	progress_bar.custom_minimum_size = Vector2(0, 24)
+	progress_bar.value = 0
+	progress_bar.max_value = 100
+	progress_bar.show_percentage = false
+	section.add_child(progress_bar)
+
+	# 进度文本
+	var progress_text = _ui_module.create_label("0 / 100")
+	progress_text.name = "ProgressText"
+	progress_text.add_theme_font_size_override("font_size", 12)
+	progress_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	section.add_child(progress_text)
+
+	return section
+
+## 创建快捷按钮区域
+func _create_buttons_section() -> Control:
+	var section = VBoxContainer.new()
+	section.add_theme_constant_override("separation", 8)
+
+	# 标题
+	var label = _ui_module.create_label("功能")
+	label.add_theme_font_size_override("font_size", 16)
+	section.add_child(label)
+
+	# 碎片日志按钮
+	var fragments_btn = Button.new()
+	fragments_btn.text = "📝 记忆碎片"
+	fragments_btn.custom_minimum_size = Vector2(0, 40)
+	fragments_btn.pressed.connect(_on_fragments_button_pressed)
+	section.add_child(fragments_btn)
+
+	# 记忆按钮
+	var memory_btn = Button.new()
+	memory_btn.text = "💭 记忆"
+	memory_btn.custom_minimum_size = Vector2(0, 40)
+	memory_btn.pressed.connect(_on_memory_button_pressed)
+	section.add_child(memory_btn)
+
+	# 设置按钮
+	var settings_btn = Button.new()
+	settings_btn.text = "⚙️ 设置"
+	settings_btn.custom_minimum_size = Vector2(0, 40)
+	settings_btn.pressed.connect(_on_settings_button_pressed)
+	section.add_child(settings_btn)
+
+	return section
 
 ## 创建设置面板
 func _create_settings_panel() -> void:
@@ -380,13 +492,78 @@ func _refresh_memory_panel() -> void:
 
 	print("[P1] 刷新记忆面板")
 
+## ==================== 按钮回调 ====================
+
+## 碎片日志按钮回调
+func _on_fragments_button_pressed() -> void:
+	var app = get_parent()
+	if app:
+		var p2 = app.get_module("p2_fragment_log_ui")
+		if p2 and p2.has_method("toggle"):
+			p2.toggle()
+			print("[P1] 切换碎片日志显示")
+
+## 记忆按钮回调
+func _on_memory_button_pressed() -> void:
+	toggle_panel(PanelType.MEMORY)
+	print("[P1] 打开记忆面板")
+
+## 设置按钮回调
+func _on_settings_button_pressed() -> void:
+	toggle_panel(PanelType.SETTINGS)
+	print("[P1] 打开设置面板")
+
+## ==================== 系统事件回调 ====================
+
 ## 好感度升级事件回调
 func _on_affinity_level_up(_new_level: int, new_level_name: String) -> void:
 	print("[P1] 好感度升级: %s" % new_level_name)
+	_update_affinity_display()
 
 ## 好感度降级事件回调
 func _on_affinity_level_down(_new_level: int, new_level_name: String) -> void:
 	print("[P1] 好感度降级: %s" % new_level_name)
+	_update_affinity_display()
+
+## 更新好感度显示
+func _update_affinity_display() -> void:
+	if not _main_panel:
+		return
+
+	if not _fe3_affinity:
+		return
+
+	# 获取好感度数据
+	var current_level: int = 1
+	var level_progress: float = 0.0
+	var current_points: int = 0
+	var next_level_points: int = 100
+
+	if _fe3_affinity.has_method("get_level"):
+		current_level = _fe3_affinity.get_level()
+	if _fe3_affinity.has_method("get_level_progress"):
+		level_progress = _fe3_affinity.get_level_progress()
+	if _fe3_affinity.has_method("get_affinity"):
+		current_points = int(_fe3_affinity.get_affinity())
+	if _fe3_affinity.has_method("get_next_level_threshold"):
+		next_level_points = _fe3_affinity.get_next_level_threshold()
+
+	# 更新等级显示
+	var level_value = _main_panel.find_child("LevelValue", true, false)
+	if level_value:
+		level_value.text = str(current_level)
+
+	# 更新进度条
+	var progress_bar = _main_panel.find_child("AffinityProgress", true, false)
+	if progress_bar:
+		progress_bar.value = level_progress * 100.0
+
+	# 更新进度文本
+	var progress_text = _main_panel.find_child("ProgressText", true, false)
+	if progress_text:
+		progress_text.text = "%d / %d" % [current_points, next_level_points]
+
+	print("[P1] 好感度显示已更新: Lv%d (%.1f%%)" % [current_level, level_progress * 100.0])
 
 ## 记忆解锁事件回调
 func _on_memory_unlocked(memory_id: String) -> void:
