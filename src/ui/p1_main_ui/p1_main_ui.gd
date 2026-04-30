@@ -191,6 +191,13 @@ func open_panel(panel_type: int) -> void:
 
 	panel_opened.emit(panel_type)
 
+## 切换面板显示状态
+func toggle_panel(panel_type: int) -> void:
+	if _current_panel == panel_type:
+		close_panel()
+	else:
+		open_panel(panel_type)
+
 ## 关闭当前面板
 func close_panel() -> void:
 	_close_current_panel()
