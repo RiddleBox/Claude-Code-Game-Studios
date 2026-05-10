@@ -1,13 +1,19 @@
 # F2 — 角色状态机（Character State Machine）
 
-> **Status**: Approved
+> **Status**: Updated (Gap Analysis 2026-05-09)
 > **Author**: Claude Code Game Studios
-> **Last Updated**: 2026-03-26
-> **Implements Pillar**: 真实存在感 / 陪伴不打扰
+> **Last Updated**: 2026-05-09
+> **Implements Pillar**: 真实存在感 / 陪伴不打扰 / 窥视感
+> **References**: [connection-relationship.md](../core/connection-relationship.md)
 
 ## Overview
 
 F2 角色状态机是游戏中桌宠角色的行为核心。它定义并管理角色在任意时刻所处的状态（待机、互动、外出、归来等），驱动所有依赖状态的子系统——动画播放（C1）、外出循环（C2）、性格表达（C5）、声音（Fe5）。状态机本身不包含游戏逻辑的具体实现，只负责状态的维护、转换条件的判断、以及状态变更信号的广播。它是角色「有自己的生活」这一核心体验的技术基础。
+
+**核心设计原则**（基于 connection-relationship.md）：
+- **玩家不是操作者，而是偶然的邻居**：角色的状态转换不是"响应指令"，而是"感知到观察者的存在"
+- **存在感 > 互动感**：角色的自主生活状态（Idle, Busy_BackTurned）优先于响应玩家的状态（Attentive, Interacting）
+- **连接状态作为隐藏主轴**：F5 的连接质量（DISCONNECTED/DEGRADED/CONNECTED）影响角色对观察者的感知敏感度
 
 ## Player Fantasy
 
@@ -27,7 +33,8 @@ F2 角色状态机是游戏中桌宠角色的行为核心。它定义并管理�
 #### 状态优先级（高优先级可打断低优先级）
 
 ```
-Returning > Performing > Talking > Reacting > Interacting > Attentive > Idle
+Returning > Performing > Talking > Reacting > Interacting > Attentive > Aware > Idle
+Busy_BackTurned 与 Idle 同级（可互相转换）
 Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请求）
 ```
 
@@ -35,13 +42,33 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 
 **Idle（待机）**
 - 入口：其他状态自然结束后回落到 Idle
-- 行为：播放循环待机动画，无逻辑处理
+- 行为：播放循环待机动画，无逻辑处理；角色做自己的事（可能往窗外看、阅读、整理等日常行为）
 - 自动行为：在 Idle 持续超过 `IDLE_FIDGET_INTERVAL`（默认 45 秒）时，触发一次随机的 Reacting（小动作/情绪），然后回到 Idle
+- **设计说明**：Idle 动画体现"存在感 > 互动感"，角色不为玩家表演，而是自然地生活
 
-**Attentive（注意）**
+**Aware（隐约意识到观察者）**
+- 入口：Idle 或 Busy_BackTurned 状态下，受 F5 连接质量影响的随机触发
+  - DISCONNECTED：触发概率极低（~5%）
+  - DEGRADED：触发概率中等（~20%）
+  - CONNECTED：触发概率高（~40%）
+- 退出：持续 2-3 秒后自动回到 Idle 或 Busy_BackTurned
+- 行为：角色朝向窗户/屏幕方向看（玩家所在方向），有微妙的停顿，但不直视镜头；视线焦点可能在窗框、窗边的某个点
+- **设计说明**：体现"远距离连接"状态，角色模糊地感知到观察者的存在，但不确定
+- **关键约束**：视线方向是"朝向玩家方向"，但不是"看向镜头"，符合"不为玩家表演"原则
+
+**Busy_BackTurned（背对玩家忙碌）**
+- 入口：Idle 状态下随机触发（概率 `BUSY_BACKTURN_PROBABILITY`，默认 15%）
+- 退出：持续时间到达后（随机 30-120 秒）自动回到 Idle
+- 行为：角色背对窗口，专注于自己的活动（工作、阅读、整理房间等）；玩家只能看到背影和环境
+- 可被打断：可被 Attentive、Interacting 等高优先级状态打断
+- **设计说明**：强化"存在感 > 互动感"原则，角色不总是面向玩家，有自己的生活节奏
+
+**Attentive（注意到窗边）**
 - 入口：鼠标在窗口内悬停超过 `ATTENTIVE_HOVER_DELAY`（默认 1.5 秒）
 - 退出：鼠标离开窗口，或超过 `ATTENTIVE_TIMEOUT`（默认 8 秒）无进一步互动
-- 行为：播放注意动画，不阻塞其他事件
+- 行为：角色朝向窗户/屏幕方向看，停顿片刻，然后可能继续看向窗边，也可能转身继续做自己的事
+- **设计说明**：这是"隐约注意到玩家后的反应"，不是主动表演，而是自然的感知反应
+- **关键约束**：视线方向是"朝向窗边"，不是"看向镜头"，符合"稳定连接"状态的视觉表现
 
 **Interacting（互动）**
 - 入口：玩家左键点击角色区域
@@ -60,10 +87,11 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 - 退出 B：Aria 接口层发送 `aria_response_ready` 信号，转入 Performing
 - 行为：播放对应反应动画；语音确认的具体动画形式（侧耳倾听、记录、场景亮光等）由美术方向决定，状态机只负责进出控制
 
-**Performing（演出）**
+**Performing（演出序列）**
 - 入口：系统发送 `trigger_performance(performance_id)` 信号（来源：Aria 完成任务 / 事件线节点）
 - 退出：演出序列播放完毕，发出 `performance_ended` 信号，转入 Talking 或 Idle
 - 行为：按剧本顺序执行演出序列（动画 + 对话 + 情绪），不可被低优先级事件打断
+- **设计说明**："Performing" 指"执行预定的演出序列"（scripted sequence），不是"为观众表演"（performing for audience）；这是系统触发的特定行为序列，角色仍保持在自己的世界中
 
 **Away（外出）**
 - 入口：C2 外出-归来循环发出 `departure_triggered` 信号
@@ -91,9 +119,15 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 | 任意（非Away） | `trigger_reaction(type)` | Reacting | 需 ≥ Reacting 优先级 |
 | 任意（非Away） | `voice_input_detected` | Reacting(B) | 需 ≥ Reacting 优先级 |
 | Idle | `pending_departure == true` | Away | 延迟出发触发 |
+| Idle | F5 连接质量触发（概率） | Aware | 受连接质量影响的随机触发 |
+| Idle | 随机触发（概率 `BUSY_BACKTURN_PROBABILITY`） | Busy_BackTurned | 自动 |
 | Idle | 鼠标悬停 > `ATTENTIVE_HOVER_DELAY` | Attentive | 自动 |
 | Idle | `IDLE_FIDGET_INTERVAL` 超时 | Reacting | 自动，随机 reaction_type |
 | Idle | 玩家左键点击 | Interacting | 自动 |
+| Aware | 持续 2-3 秒 | Idle 或 Busy_BackTurned | 自动，回到之前的状态 |
+| Busy_BackTurned | 持续时间到达（30-120s） | Idle | 自动 |
+| Busy_BackTurned | 鼠标悬停 > `ATTENTIVE_HOVER_DELAY` | Attentive | 可被打断 |
+| Busy_BackTurned | 玩家左键点击 | Interacting | 可被打断 |
 | Attentive | 鼠标离开 / 超时 `ATTENTIVE_TIMEOUT` | Idle | 自动 |
 | Attentive | 玩家左键点击 | Interacting | 自动 |
 | Interacting | 菜单关闭 | Idle | 自动 |
@@ -124,7 +158,7 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 | **Fe1 对话系统** | Fe1 ↔ F2 | 接收对话请求，转入 Talking；广播 `state_changed` | `dialogue_ended` 信号 |
 | **Fe2 泄漏内容系统** | F2 → Fe2 | 广播 Away 状态进入信号，允许 Fe2 叠加演出 | — |
 | **Fe5 声音系统** | F2 → Fe5 | `state_changed` 信号（Fe5 依据状态播放对应音效） | — |
-| **F5 Aria 接口层** | F5 ↔ F2 | 接收 `voice_input_detected` / `aria_response_ready` / 超时信号 | Aria 接口层的语音事件信号 |
+| **F5 Aria 接口层** | F5 ↔ F2 | 接收 `voice_input_detected` / `aria_response_ready` / 超时信号；接收连接质量参数（DISCONNECTED/DEGRADED/CONNECTED）影响 Aware 状态触发概率 | Aria 接口层的语音事件信号和连接质量状态 |
 
 **接口约定**：
 - F2 暴露方法 `request_state_change(new_state, requester)` — 统一入口，内部做优先级检查
@@ -192,6 +226,11 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 | `ATTENTIVE_HOVER_DELAY` | 1.5 秒 | 0.5s 到 3s | 需要更长悬停才触发注意 | 鼠标一靠近就注意到玩家 |
 | `ATTENTIVE_TIMEOUT` | 8 秒 | 4s 到 20s | 角色保持注意状态更久 | 注意状态更快结束回到 Idle |
 | `ARIA_RESPONSE_TIMEOUT` | 30 秒 | 10s 到 60s | 等待 Aria 更久才判定超时 | 更快判定超时，播放失败动画 |
+| `BUSY_BACKTURN_PROBABILITY` | 15% | 5% 到 40% | 角色更频繁背对玩家 | 角色更少背对玩家 |
+| `AWARE_TRIGGER_BASE_INTERVAL` | 60 秒 | 30s 到 180s | 检查 Aware 触发的间隔更长 | 检查 Aware 触发的间隔更短 |
+| `AWARE_PROBABILITY_DISCONNECTED` | 5% | 0% 到 15% | 断连时更容易触发 Aware | 断连时更难触发 Aware |
+| `AWARE_PROBABILITY_DEGRADED` | 20% | 10% 到 40% | 弱连接时更容易触发 Aware | 弱连接时更难触发 Aware |
+| `AWARE_PROBABILITY_CONNECTED` | 40% | 20% 到 60% | 稳定连接时更容易触发 Aware | 稳定连接时更难触发 Aware |
 
 ## Visual/Audio Requirements
 
@@ -200,6 +239,8 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 | 状态变更 | 视觉响应负责方 | 音频响应负责方 |
 |---------|--------------|---------------|
 | → Idle | C1 角色动画系统 | Fe5 声音系统 |
+| → Aware | C1 角色动画系统 | Fe5 声音系统 |
+| → Busy_BackTurned | C1 角色动画系统 | Fe5 声音系统 |
 | → Attentive | C1 角色动画系统 | Fe5 声音系统 |
 | → Interacting | C1 + P1 主界面UI | Fe5 声音系统 |
 | → Talking | C1 + Fe1 对话系统 | Fe5 声音系统 |
@@ -226,10 +267,13 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 ## Acceptance Criteria
 
 - [ ] 游戏启动后角色自动进入 Idle 状态
+- [ ] Idle 状态下，角色根据 F5 连接质量随机触发 Aware 状态（CONNECTED 时概率 ~40%，DEGRADED 时 ~20%，DISCONNECTED 时 ~5%）
+- [ ] Aware 状态持续 2-3 秒后自动回到 Idle
+- [ ] Idle 状态下，随机触发 Busy_BackTurned 状态（概率 ~15%），持续 30-120 秒后回到 Idle
 - [ ] 鼠标悬停窗口 1.5 秒后角色进入 Attentive 状态，离开后回到 Idle
 - [ ] 左键点击角色区域触发 Interacting 状态
 - [ ] Away 状态期间，左键点击和鼠标悬停均无法触发状态变更
-- [ ] C2 发出 `departure_triggered` 时，若当前为 Idle/Attentive/Reacting(A)，立即进入 Away
+- [ ] C2 发出 `departure_triggered` 时，若当前为 Idle/Aware/Attentive/Reacting(A)，立即进入 Away
 - [ ] C2 发出 `departure_triggered` 时，若当前为 Interacting/Talking/Reacting(B)/Performing/Returning，设置 `pending_departure=true`，当前状态结束回 Idle 后自动进入 Away
 - [ ] Reacting(B) 状态下，30 秒内无 Aria 响应时播放失败动画并回到 Idle
 - [ ] Reacting(B) 状态下，收到 `aria_response_ready` 时正确转入 Performing
@@ -240,6 +284,8 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 - [ ] 演出数据缺失时状态机不崩溃，直接回到 Idle 并记录日志
 - [ ] 窗口 Hidden 期间状态机继续正常运作，时间计数不暂停
 - [ ] 玩家正在交互（Interacting/Talking/Reacting(B)/Performing）时不会被强制中断进入 Away
+- [ ] Aware 和 Attentive 状态的动画中，角色视线朝向窗边/玩家方向，但不直视镜头
+- [ ] Busy_BackTurned 状态的动画中，角色背对窗口，玩家只能看到背影
 
 ## Open Questions
 
@@ -249,3 +295,6 @@ Away 状态不可被打断（外出期间拒绝所有非 C2 的状态变更请�
 | `IDLE_FIDGET_INTERVAL` 是固定时长还是随机范围（如 30-60 秒）？ | 设计者 | 原型阶段 | 待定 |
 | Away 状态下 Aria 叠加演出与 Fe2 泄漏演出是否共享同一个演出队列？并发时如何排序？ | 开发者 | Fe2 设计阶段 | 待定 |
 | `departure_declined` 后 C2 的概率积累上限是多少？是否有最大强制出发时间？ | 设计者 | C2 设计阶段 | 待定 |
+| Aware 状态的触发是基于固定间隔检查还是事件驱动？ | 开发者 | 实现阶段 | 待定 |
+| Busy_BackTurned 状态的持续时间是固定范围（30-120s）还是受性格影响？ | 设计者 | C5 设计阶段 | 待定 |
+| Aware 和 Attentive 状态的视线焦点具体位置（窗框？窗边某点？）由谁定义？ | 美术 | C1 设计阶段 | 待定 |

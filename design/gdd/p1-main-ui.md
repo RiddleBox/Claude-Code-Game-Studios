@@ -1,15 +1,21 @@
 # P1 — 主界面 UI（Main UI）
 
-> **Status**: Approved
+> **Status**: Updated (Gap Analysis 2026-05-09)
 > **Author**: Claude Code Game Studios
-> **Last Updated**: 2026-03-29
-> **Implements Pillar**: 陪伴不打扰 / 真实存在感
+> **Last Updated**: 2026-05-09
+> **Implements Pillar**: 陪伴不打扰 / 真实存在感 / 窥视感
+> **References**: [connection-relationship.md](../core/connection-relationship.md)
 
 ## Overview
 
-P1 主界面 UI 是玩家与窗语唯一的视觉接触面。它是一个分层的合成渲染系统，将四个独立图层（窗口框架、背景、角色、泄漏内容）按 Z 轴顺序叠合，呈现出「屏幕角落有一扇通往异世界的小窗」的核心视觉体验。P1 本身不持有游戏逻辑——它订阅 F2、C2、Fe2 的状态信号，将各系统的状态变化翻译为对应的视觉表现。
+P1 主界面 UI 是玩家与窗语唯一的视觉接触面。它是一个分层的合成渲染系统，将四个独立图层（窗口框架、背景、角色、泄漏内容）按 Z 轴顺序叠合，呈现出「屏幕角落有一扇通往异世界的小窗」的核心视觉体验。P1 本身不持有游戏逻辑——它订阅 F2、C2、Fe2、F5 的状态信号，将各系统的状态变化翻译为对应的视觉表现。
 
 P1 管理两种主要视图状态：**常态视图**（角色在窗内，背景正常，可接受玩家互动）和**外出态视图**（角色不在，背景变暗，洞口框架保留，泄漏内容仍可出现）。视图切换由 C2 的出发/归来信号驱动，切换本身是平滑过渡而非瞬间跳变。P1 还管理两种短暂浮层：点击角色触发的**交互菜单**，以及归来时显示的**碎片提示**。
+
+**核心设计原则**（基于 connection-relationship.md）：
+- **连接状态的视觉化**：F5 的连接质量（DISCONNECTED/DEGRADED/CONNECTED）通过视觉效果映射，让玩家感知到"连接"这个核心概念
+- **观察介质的物理真实感**：通过"屏幕玻璃"效果强化"隔着介质观察"的质感，而不是"直接看到另一个世界"
+- **Frame 层的定位**：Frame 层是**玩家侧的 UI 层**（观察介质的边框），不是角色世界内的物理窗框；它属于"屏幕"这一侧，不属于"窗户"那一侧
 
 P1 的设计约束核心是「不打扰原则」：所有 UI 元素默认安静存在，不主动抢夺视觉焦点；泄漏内容通过 Fe2 推送的数据包渲染，P1 只负责呈现，不决定内容；玩家的任何交互都是自愿触发，不存在强制弹窗或必须点击的提示。
 
@@ -34,12 +40,15 @@ P1 的设计约束核心是「不打扰原则」：所有 UI 元素默认安静�
 #### 图层规则
 
 4. P1 维护四个固定图层，Z 轴顺序固定，不可动态调整：
-   - **Layer 1 窗口框架层**：洞口边框，始终可见，不受任何状态影响
-   - **Layer 2 背景层**：异世界环境；Away 时渐暗，归来时渐亮
+   - **Layer 1 窗口框架层**：玩家侧的 UI 边框（软件窗口边框），始终可见，不受任何状态影响
+   - **Layer 2 背景层**：异世界环境；Away 时渐暗，归来时渐亮；受 F5 连接质量影响
    - **Layer 3 角色层**：C1 动画渲染区；Away 时由 C1/F2 控制消失
    - **Layer 4 泄漏内容层**：Fe2 推送的文字/特效；始终在最上层
+   - **Layer 0 屏幕玻璃效果层**（可选）：覆盖整个窗口的微妙效果，强化"隔着介质观察"的质感
 
 5. 浮层（交互菜单、碎片提示）渲染于 Layer 4 之上，但生命周期独立管理，不影响常驻图层。
+
+6. **连接状态视觉映射**：F5 的连接质量（DISCONNECTED/DEGRADED/CONNECTED）影响 Layer 2 背景层和 Layer 0 屏幕玻璃效果的视觉表现，让玩家感知到"连接"的强弱。
 
 #### 交互规则
 
@@ -66,13 +75,29 @@ P1 的设计约束核心是「不打扰原则」：所有 UI 元素默认安静�
 │  浮层：碎片提示 / 交互菜单               │  Z: 100+  非常驻，生命周期独立
 │  Layer 4：泄漏内容叠加层                 │  Z: 30    Fe2 推送，文字/特效
 │  Layer 3：角色层                         │  Z: 20    C1 动画节点
-│  Layer 2：背景层                         │  Z: 10    异世界环境图，Away 暗场
-│  Layer 1：窗口框架层                     │  Z: 1     洞口边框，始终存在
+│  Layer 2：背景层                         │  Z: 10    异世界环境图，受连接质量影响
+│  Layer 1：窗口框架层                     │  Z: 1     玩家侧 UI 边框，始终存在
+│  Layer 0：屏幕玻璃效果层（可选）         │  Z: 0     覆盖整个窗口，受连接质量影响
 └─────────────────────────────────────────┘
 ```
 
+#### Layer 0 — 屏幕玻璃效果层（可选，Post-MVP）
+- **内容**：覆盖整个窗口的微妙视觉效果，强化"隔着屏幕观察"的质感
+- **效果类型**：
+  - 微妙的屏幕反光/高光（根据连接状态强度变化）
+  - 轻微的景深效果（强化"隔着介质观察"）
+  - 连接不稳定时的轻微画面抖动/撕裂（DISCONNECTED/DEGRADED 时）
+- **连接状态映射**：
+  - DISCONNECTED：明显的噪点/模糊/色彩饱和度降低（如隔着毛玻璃）
+  - DEGRADED：轻微模糊/色彩略微褪色（如隔着纱窗）
+  - CONNECTED：清晰画面，只有微妙的屏幕反光
+- **交互**：透明穿透，不响应点击
+- **优先级**：Post-MVP，需要美术方向确认具体效果
+
 #### Layer 1 — 窗口框架层
-- **内容**：洞口/窗口边框图形资源
+- **内容**：玩家侧的 UI 边框（软件窗口边框），不是角色世界内的物理窗框
+- **设计定位**：这是"屏幕"这一侧的边框，属于玩家的观察介质，不属于角色的世界
+- **视觉风格**：极简的软件窗口边框，避免明显的"窗框"或"传送门"视觉（符合 visual-generation-spec.md Rule 5）
 - **行为**：静态，不响应任何状态变化，始终全亮、全不透明
 - **尺寸**：与 F1 窗口尺寸一致；F1 `window_resize` 时同步调整
 - **交互**：非命中区，点住可拖动窗口
@@ -80,8 +105,12 @@ P1 的设计约束核心是「不打扰原则」：所有 UI 元素默认安静�
 #### Layer 2 — 背景层
 - **内容**：异世界环境背景图（MVP 为静态图，后续可扩展为轻微动态）
 - **常态**：全亮，`modulate.a = 1.0`
+- **连接状态映射**（新增）：
+  - **CONNECTED**：清晰画面，`modulate = Color(1, 1, 1, 1)`
+  - **DEGRADED**：轻微模糊/色彩略微褪色，`modulate = Color(0.85, 0.85, 0.90, 1.0)`（轻微偏冷）
+  - **DISCONNECTED**：明显模糊/噪点/色彩饱和度降低，`modulate = Color(0.60, 0.60, 0.70, 1.0)`（明显偏冷）
 - **Away 过渡**：收到 `outbound_triggered` 后，`modulate` 在 `AWAY_FADE_DURATION`（1.5s）内渐变至 `AWAY_DIM_COLOR`（深色叠加，亮度约 20%）
-- **归来过渡**：收到 `return_completed` 后，`modulate` 在 `RETURN_FADE_DURATION`（1.0s）内恢复全亮
+- **归来过渡**：收到 `return_completed` 后，`modulate` 在 `RETURN_FADE_DURATION`（1.0s）内恢复至当前连接质量对应的颜色
 - **交互**：非命中区，点住可拖动窗口
 
 #### Layer 3 — 角色层
@@ -179,6 +208,7 @@ t=1.0s  背景恢复全亮，常态视图完成
 | **C1 角色动画系统** | C1 ↔ P1 | C1 节点挂载于 Layer 3；`get_character_bounds() -> Rect2`（计算命中区） | Layer 3 挂载点位置和尺寸约束 |
 | **C2 外出-归来循环** | C2 → P1 | `outbound_triggered()` 信号；`return_completed()` 信号 | — |
 | **Fe2 泄漏内容系统** | Fe2 → P1 | 展示数据包（content, duration, fx_style, display_type） | Layer 4 渲染区域位置和尺寸 |
+| **F5 Aria 接口层** | F5 → P1 | 连接质量状态（DISCONNECTED/DEGRADED/CONNECTED）；`connection_quality_changed` 信号 | — |
 | **Fe5 声音系统** | P1 → Fe5 | — | 交互菜单点击时触发 UI 交互音（Post-MVP） |
 | **Fe6 通知系统** | Fe6 → P1 | 通知展示请求（Post-MVP） | — |
 | **F4 存档系统** | 双向 | 读取窗口上次位置 | 窗口位置变更时写入存档 |
@@ -276,6 +306,7 @@ text_position.y = clamp(random_y, TEXT_MARGIN, window_height - TEXT_MARGIN - tex
 | **C1 角色动画系统** | C1 ↔ P1 | `get_character_bounds() -> Rect2`；C1 节点挂载于 P1 Layer 3 | Layer 3 挂载点；窗口尺寸约束 |
 | **C2 外出-归来循环** | C2 → P1 | `outbound_triggered()` / `return_completed()` 信号 | `show_return_hint(fragment_count)` 方法 |
 | **Fe2 泄漏内容系统** | Fe2 → P1 | `show_leak_content(packet)` 方法调用 | Layer 4 可用渲染区域（Rect2） |
+| **F5 Aria 接口层** | F5 → P1 | 连接质量状态（DISCONNECTED/DEGRADED/CONNECTED）；`connection_quality_changed` 信号 | — |
 | **F4 存档系统** | 双向 | 启动时读取窗口位置 | 窗口拖动结束时写入新位置 |
 
 **反向依赖（依赖 P1 的系统）：**
@@ -295,6 +326,9 @@ text_position.y = clamp(random_y, TEXT_MARGIN, window_height - TEXT_MARGIN - tex
 | `AWAY_FADE_DURATION` | 1.5s | 0.5–3.0s | 外出背景渐暗速度；过快显得突兀，过慢玩家不确定是否出发 |
 | `RETURN_FADE_DURATION` | 1.0s | 0.3–2.0s | 归来背景渐亮速度；应比渐暗快，强调「回来了」的惊喜感 |
 | `AWAY_DIM_COLOR` | Color(0.15, 0.18, 0.25, 1.0) | 亮度 10–35% | 外出态背景暗度；过暗失去窗口存在感，过亮不像「里面没人」 |
+| `CONNECTION_DEGRADED_COLOR` | Color(0.85, 0.85, 0.90, 1.0) | 亮度 75–95% | 弱连接时背景色调；轻微偏冷，不影响可见性 |
+| `CONNECTION_DISCONNECTED_COLOR` | Color(0.60, 0.60, 0.70, 1.0) | 亮度 50–75% | 断连时背景色调；明显偏冷，如隔着毛玻璃 |
+| `CONNECTION_TRANSITION_DURATION` | 2.0s | 1.0–5.0s | 连接质量变化时的过渡速度；过快显得突兀，过慢不明显 |
 | `MENU_TIMEOUT` | 5s | 3–10s | 交互菜单自动关闭等待时间；过短玩家来不及选择，过长遮挡视野 |
 | `HINT_TIMEOUT` | 8s | 5–15s | 碎片提示自动淡出时间；过短玩家可能错过，过长持续占据视野 |
 | `TEXT_MARGIN` | 12px | 6–20px | 泄漏文字距窗口边缘最小距离；过小文字贴边难读 |
@@ -308,9 +342,15 @@ text_position.y = clamp(random_y, TEXT_MARGIN, window_height - TEXT_MARGIN - tex
 - [ ] 窗口框架层在任何状态下始终全亮、全不透明
 - [ ] C1 动画节点正确挂载于 Layer 3，动画正常播放
 
+**连接状态视觉映射**
+- [ ] 收到 F5 `connection_quality_changed(CONNECTED)` 后，背景层在 `CONNECTION_TRANSITION_DURATION`（2.0s）内过渡至清晰画面
+- [ ] 收到 F5 `connection_quality_changed(DEGRADED)` 后，背景层在 `CONNECTION_TRANSITION_DURATION`（2.0s）内过渡至 `CONNECTION_DEGRADED_COLOR`
+- [ ] 收到 F5 `connection_quality_changed(DISCONNECTED)` 后，背景层在 `CONNECTION_TRANSITION_DURATION`（2.0s）内过渡至 `CONNECTION_DISCONNECTED_COLOR`
+- [ ] 连接质量变化时的过渡是平滑的，不跳变
+
 **视图切换**
 - [ ] 收到 `outbound_triggered` 后，背景层在 `AWAY_FADE_DURATION`（1.5s）内平滑渐暗至 `AWAY_DIM_COLOR`
-- [ ] 收到 `return_completed` 后，背景层在 `RETURN_FADE_DURATION`（1.0s）内平滑渐亮至全亮
+- [ ] 收到 `return_completed` 后，背景层在 `RETURN_FADE_DURATION`（1.0s）内平滑渐亮至当前连接质量对应的颜色
 - [ ] 渐暗进行中收到 `return_completed`：立即以当前值为起点反向渐亮，不跳变
 - [ ] 归来 Tween 过半（0.5s）时碎片提示浮层出现
 
@@ -345,6 +385,7 @@ text_position.y = clamp(random_y, TEXT_MARGIN, window_height - TEXT_MARGIN - tex
 **容错**
 - [ ] C1 未就绪时命中区禁用，泄漏文字降级为窗口中央，不崩溃
 - [ ] 窗口尺寸极小时所有元素 clamp 在窗口内，不溢出
+- [ ] F5 连接质量状态未初始化时，默认使用 CONNECTED 状态的视觉表现
 
 ## Open Questions
 
@@ -376,3 +417,21 @@ MVP 阶段交互菜单包含哪些按钮（如「戳一戳」「看看它」「�
 Layer 1 和 Layer 2 的图形资源尺寸、格式、透明通道要求尚未与美术方向对齐。需在 P1 实现前确定资源规格（尺寸是否固定、是否支持拉伸、透明区域的处理方式）。
 - 负责人：美术方向 + 开发者
 - 目标层级：P1 实现前
+
+**6. 连接质量视觉效果的具体实现（新增）**
+
+`CONNECTION_DEGRADED_COLOR` 和 `CONNECTION_DISCONNECTED_COLOR` 的具体色值需要美术方向确认。此外，Layer 0 屏幕玻璃效果的具体实现方式（shader、后处理、叠加纹理）需要技术验证。
+- 负责人：美术方向 + 开发者
+- 目标层级：Post-MVP，需要先验证 MVP 核心体验后再决定是否实现
+
+**7. Frame 层的视觉设计（新增）**
+
+Frame 层作为"玩家侧 UI 边框"的具体视觉风格需要美术方向确认：是极简的线框、半透明边框，还是完全不可见？需要避免"传送门"或"魔法窗框"的视觉暗示。
+- 负责人：美术方向
+- 目标层级：P1 实现前
+
+**8. 连接质量变化的触发时机（新增）**
+
+F5 的连接质量何时变化？是基于时间间隔、玩家行为、还是随机事件？这会影响 P1 视觉效果的出现频率和玩家感知。
+- 负责人：游戏设计 + F5 系统设计
+- 目标层级：F5 设计阶段

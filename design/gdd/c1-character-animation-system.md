@@ -1,13 +1,22 @@
 # C1 — 角色动画系统（Character Animation System）
 
-> **Status**: Approved
+> **Status**: Updated (Gap Analysis 2026-05-09)
 > **Author**: Claude Code Game Studios
-> **Last Updated**: 2026-03-27
-> **Implements Pillar**: 真实存在感（角色生命感的视觉表现层）
+> **Last Updated**: 2026-05-09
+> **Implements Pillar**: 真实存在感 / 窥视感 / 陪伴不打扰
+> **References**: [connection-relationship.md](../core/connection-relationship.md), [visual-generation-spec.md](../art/visual-generation-spec.md)
 
 ## Overview
 
 C1 角色动画系统是游戏的视觉表现核心。它订阅 F2 角色状态机的 `state_changed` 信号，将抽象状态转译为具体的帧动画序列。系统管理两种核心构图模式：**洞口内模式**（角色在窗口内侧，玩家从外往里看，呈现上半身或局部）与**探出模式**（角色主动越过洞口边缘探向玩家侧），在不同状态下切换。C1 不包含任何游戏逻辑，只负责「此刻应该播放什么动画、以何种构图呈现、如何在帧之间过渡」。视觉风格暂定为插画质感 NPR 风格（清晰轮廓线+分层阴影，「会动的插画」感），待美术方向深化调研后确认。角色比例为 2-3 头身，画面始终在 320×320px 的透明悬浮窗内渲染。
+
+**核心设计约束**（基于 connection-relationship.md 和 visual-generation-spec.md）：
+- **角色不为玩家表演**：所有动画中，角色的视线方向、姿态、行为都应该是"在自己的世界中自然生活"，不是"面向观众展示"
+- **观察者不在物理空间内**：玩家是跨世界观察者，角色的视线可以朝向窗边（感知到观察者），但不能直视镜头（不能看到观察者）
+- **视线方向约束**：
+  - ✅ 允许：朝向窗边、窗框、窗外（角色世界的窗外）、房间内的物体
+  - ❌ 禁止：直视镜头、面向玩家的"表演"姿态、"看向你"的构图
+- **构图约束**：避免面对面社交构图，优先使用侧面观察、角落观察、高处观察视角
 
 ## Player Fantasy
 
@@ -34,15 +43,22 @@ C1 角色动画系统是游戏的视觉表现核心。它订阅 F2 角色状态�
 
 | F2 状态 | 构图模式 | 说明 |
 |---------|---------|------|
-| Idle | INSIDE | 静静待在里面 |
-| Attentive | INSIDE → 轻微前倾 | 抬头靠近窗口但不探出 |
-| Interacting | LEANING_OUT | 主动探出迎接玩家 |
-| Talking | LEANING_OUT | 对话时探出，拉近感 |
+| Idle | INSIDE | 静静待在里面，可能往窗外看（背对玩家方向）、阅读、整理等日常行为 |
+| Aware | INSIDE | 朝向窗边看（玩家方向），但不直视镜头；视线焦点在窗框或窗边某点 |
+| Busy_BackTurned | INSIDE | 背对窗口，专注于自己的活动；玩家只能看到背影 |
+| Attentive | INSIDE → 轻微前倾 | 朝向窗边看，停顿片刻；不直视镜头，视线在窗边 |
+| Interacting | LEANING_OUT | 主动探出迎接玩家；视线朝向窗边，不直视镜头 |
+| Talking | LEANING_OUT | 对话时探出，拉近感；视线朝向窗边，不直视镜头 |
 | Reacting(A) | INSIDE | 对内部事件反应，不探出 |
 | Reacting(B) | INSIDE | 听到语音，专注内部 |
-| Performing | 由演出数据决定 | 每个 performance 单独指定 |
+| Performing | 由演出数据决定 | 每个 performance 单独指定；需遵守视线约束 |
 | Away | 不显示 | 角色不在画面中 |
 | Returning | LEANING_OUT | 归来时从洞口探入 |
+
+**关键约束说明**：
+- 所有状态的动画中，角色视线方向必须符合"不为玩家表演"原则
+- "朝向窗边看"≠"看向镜头"：视线焦点应该在窗框、窗边的某个点，或者略过镜头看向远处
+- LEANING_OUT 模式下，角色探出是"靠近窗边"的自然行为，不是"面向观众展示"
 
 7. 构图模式切换使用 **Tween 动画**（0.2s ease-in-out），不硬切
 
@@ -53,6 +69,8 @@ C1 角色动画系统是游戏的视觉表现核心。它订阅 F2 角色状态�
 | F2 状态 | 必须动画 | 可选变体 |
 |---------|---------|----------|
 | Idle | `idle_loop`（循环） | `idle_blink`、`idle_look_around`、`idle_fidget_A/B/C`（随机小动作池） |
+| Aware | `aware_look`（单次，2-3秒） | — |
+| Busy_BackTurned | `busy_back_loop`（循环） | `busy_back_A/B`（不同活动变体：整理、工作、阅读） |
 | Attentive | `attentive_loop`（循环） | — |
 | Interacting | `interact_in`（进入）、`interact_loop`（循环） | — |
 | Talking | `talk_loop`（循环，嘴动） | `talk_happy`、`talk_thinking`（可选情绪变体） |
@@ -61,6 +79,15 @@ C1 角色动画系统是游戏的视觉表现核心。它订阅 F2 角色状态�
 | Performing | 由 performance 数据包提供 | — |
 | Away | 无（角色隐藏） | — |
 | Returning | `return_in`（归来进场动画） | — |
+
+**新增动画说明**：
+- **`aware_look`**：角色从当前活动中抬头/转身，视线朝向窗边方向（不直视镜头），停顿2-3秒，然后回到原活动；视线焦点在窗框或窗边某点
+- **`busy_back_loop`**：角色背对窗口的循环动画，玩家只能看到背影和肢体动作（如整理书架、在桌前工作）；强化"存在感 > 互动感"
+
+**现有动画视线约束澄清**：
+- **`attentive_loop`**：角色朝向窗边看，但不直视镜头；视线在窗框、窗边某点，或略过镜头看向远处
+- **`interact_in` / `interact_loop`**：角色探出窗口，但视线朝向窗边，不是"面向玩家展示"；构图应该是侧面或略微斜向，避免正面对视
+- **`talk_loop`**：对话时角色朝向窗边，但不直视镜头；可以有"对着窗边说话"的感觉，但不是"看着你说话"
 
 9. Idle 小动作池（`idle_fidget_*`）至少提供 **3 个变体**，F2 触发 Reacting 时由 C1 随机选择一个播放
 
@@ -240,6 +267,10 @@ LEANING_OUT 模式目标 Y：
 - 关键词：清晰轮廓线（线宽有变化）、2-3层饱和色分层阴影、体积感+2D表现语言
 - 感觉目标：「会动的插画」，不是3D渲染，不是像素风
 - 参考标杆：Pixar短片（Kitbull/Bao）概念艺术阶段质感、蜘蛛侠纵横宇宙 NPR 笔触语言、Hoppers 概念图中的角色性格张力
+- **视觉生成约束**：所有角色动画帧必须符合 [visual-generation-spec.md](../art/visual-generation-spec.md) 的12条世界观规则，特别是：
+  - Rule 2: 角色自洽（不看镜头，不面向玩家）
+  - Rule 6: 禁止面对面社交构图
+  - Rule 8: 视点必须有物理逻辑（侧面观察、角落观察、高处观察）
 
 **角色规格**：
 - 比例：2-3头身（超变形/Chibi）
@@ -248,7 +279,10 @@ LEANING_OUT 模式目标 Y：
 
 **动画视觉要求**：
 - 帧率：8 fps 基础，关键帧可至 12 fps
-- Idle 小动作需体现「呼吸感」——轻微的上下浮动、偶尔眨眼、随机小手势
+- Idle 小动作需体现「呼吸感」——轻微的上下浮动、偶尔眨眼、随机小手势；可以往窗外看（背对玩家方向）
+- Aware 动画需体现「隐约感知」——微妙的停顿、视线朝向窗边但不直视镜头、略带疑惑或好奇的姿态
+- Busy_BackTurned 动画需体现「专注于自己的事」——背影清晰、肢体动作自然、完全沉浸在活动中
+- Attentive 动画需体现「注意到但不表演」——朝向窗边但不直视、停顿片刻、可能继续看或转身
 - LEANING_OUT 探出动作需有「重量感」——加速进入，轻微弹性回落
 - Away 状态淡出建议配合轻微缩小（scale 0.95）再淡出，强化「退入另一侧」感
 
@@ -279,8 +313,10 @@ C1 本身不渲染任何 UI 元素，但提供以下接口供 P1 主界面 UI �
 
 ## Acceptance Criteria
 
-- [ ] F2 发出 `state_changed(Idle, Attentive)` 后，C1 在 0.15s 内完成动画过渡，角色从 INSIDE 构图轻微前移
-- [ ] F2 发出 `state_changed(Idle, Interacting)` 后，C1 在 0.2s 内完成构图 Tween 到 LEANING_OUT，角色探出窗口上边缘
+- [ ] F2 发出 `state_changed(Idle, Aware)` 后，C1 播放 `aware_look` 动画，角色视线朝向窗边但不直视镜头
+- [ ] F2 发出 `state_changed(Idle, Busy_BackTurned)` 后，C1 播放 `busy_back_loop` 动画，角色背对窗口
+- [ ] F2 发出 `state_changed(Idle, Attentive)` 后，C1 在 0.15s 内完成动画过渡，角色从 INSIDE 构图轻微前移，视线朝向窗边不直视镜头
+- [ ] F2 发出 `state_changed(Idle, Interacting)` 后，C1 在 0.2s 内完成构图 Tween 到 LEANING_OUT，角色探出窗口上边缘，视线朝向窗边不直视镜头
 - [ ] Idle 状态持续时，`idle_loop` 循环播放，每 `IDLE_FIDGET_INTERVAL` 随机穿插 `idle_fidget_*` 变体之一
 - [ ] Away 状态进入时，角色 0.3s 淡出消失；Away 状态退出时，0.3s 淡入后播放 `return_in` 动画
 - [ ] F1 窗口 Hidden 期间，C1 暂停渲染但不丢失状态；窗口重新显示时从正确状态恢复
@@ -289,6 +325,9 @@ C1 本身不渲染任何 UI 元素，但提供以下接口供 P1 主界面 UI �
 - [ ] 动画资源缺失时，显示占位色块，广播 `animation_error` 信号，游戏不崩溃
 - [ ] 状态无对应动画映射时，保持当前动画，记录警告，不崩溃
 - [ ] Performance：单帧动画切换完成时间 < 5ms（不含磁盘 I/O）
+- [ ] 所有动画帧符合 visual-generation-spec.md 的视线约束：角色不直视镜头，不面向玩家
+- [ ] `attentive_loop`、`interact_in`、`talk_loop` 动画中，角色视线朝向窗边，不直视镜头
+- [ ] `busy_back_loop` 动画中，角色背对窗口，玩家只能看到背影
 
 ## Open Questions
 
@@ -300,3 +339,6 @@ C1 本身不渲染任何 UI 元素，但提供以下接口供 P1 主界面 UI �
 | Reacting(A) 的 reaction_type 列表：由 C1 维护动画映射，还是由 C5 提供性格相关的反应类型？ | 设计者 | C5 设计阶段 | 待定 |
 | Performing 演出动画的数据格式：是 SpriteFrames 资源引用，还是包含构图模式、音效触发点等的结构化数据？ | 开发者 | Fe1 对话系统设计阶段 | 待定 |
 | 角色精灵的锚点位置：中心点、脚底，还是其他？影响构图公式计算 | 开发者 | 实现阶段 | 待定 |
+| Aware 和 Attentive 动画的视线焦点具体位置：窗框？窗边某点？略过镜头看向远处？ | 美术方向 | 动画制作阶段 | 待定——需要美术测试确定最自然的视线方向 |
+| Busy_BackTurned 动画的活动类型：整理书架、桌前工作、阅读，还是其他？需要几个变体？ | 设计者 | 动画制作阶段 | 待定——至少1个循环动画，可选2-3个变体 |
+| LEANING_OUT 模式下的视线约束：如何在"探出窗口"的同时保持"不直视镜头"？ | 美术方向 | 动画制作阶段 | 待定——可能需要侧面或略微斜向的构图 |
