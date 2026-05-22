@@ -36,9 +36,142 @@
 
 **必须遵守的规则**：
 1. **窗口不是玩家的房间** — 玩家看到的是异世界那边的场景，不是现实世界
-2. **窥视感** — 玩家只能看到异世界的一个小角落，不是全景
+2. **有限视野** — 玩家只能看到异世界的一个小角落，不是全景（320×320px 的小窗口）
 3. **角色的生活空间** — 场景是角色日常生活/工作/休息的地方
-4. **有限视野** — 320×320px 的小窗口，信息密度有限，需要分层设计
+4. **双向陪伴关系** — 角色知道玩家在观察，会看向玩家，但因空间限制只能有限交互
+
+### 观察关系约束（CRITICAL - 优先于所有其他约束）
+
+**本节基于**：`design/core/connection-relationship.md` 和 `design/art/visual-generation-spec.md`
+
+**核心理念**：
+
+> 玩家不是进入角色世界的人。玩家是通过某个媒介观察另一个真实存在的生活。
+> 角色不是为玩家表演。角色只是活着。玩家只是窥见。
+
+**关键原则**：
+- 角色**模糊地**感知到玩家（不是看镜头）
+- 角色会**偶尔**朝窗边看、在窗边停留（不确定感）
+- 这是**双向但不稳定的连接**
+- 只是因为**空间/维度限制**，只能透过这个小窗口互动
+
+### 视角设计的核心规则
+
+**详细规范参见**：`design/art/visual-generation-spec.md`
+
+以下是关键规则摘要：
+
+#### Rule 1 — 玩家视角必须"有位置"
+
+镜头不能是幽灵或神视角。
+
+**玩家是**：观察附着点
+- 可能是：设备、装置、小物件、固定观察位、环境里的无害存在
+
+**允许的附着位置**：
+- shelf edge（架子边缘）
+- workbench corner（工作台角落）
+- side apparatus（侧边装置）
+- doorway edge（门边）
+- alcove lip（壁龛边缘）
+- cabinet gap（柜子缝隙）
+- observer-side ledge（观察侧的台面）
+
+❌ **禁止**：floating camera、abstract cinematic view、free camera、dramatic angle
+
+---
+
+#### Rule 2 — 角色必须自洽（Self-contained）
+
+角色按自己的生活逻辑行动，不是为玩家表演。
+
+她不会：
+- 对镜头摆姿势
+- 朝观察者展示内容
+- 把物品朝玩家摆放
+- 为玩家腾位置
+
+✅ **正确**：fully engaged in her own private workflow、self-contained domestic behavior、unaware natural activity
+
+❌ **错误**：looking toward viewer、sharing notes、showing her book、facing the observer
+
+---
+
+#### Rule 3 — 前景必须解释视角
+
+前景不是装饰，是物理定位证据。
+
+**作用**：说明"我在哪看"
+
+✅ **好的前景**：partial bottle silhouette、shelf edge、blurred apparatus detail、cabinet frame、hanging tools
+
+❌ **坏前景**：decorative clutter only、random cinematic blur、center framing objects
+
+**重点**：前景不能挡主体，前景只用于锚定（anchoring）
+
+---
+
+#### Rule 4 — 禁止对桌构图
+
+❌ **禁止**：shared desk、across from her、opposite seat、face-to-face composition
+
+**原因**：模型默认对面有人，会导致书朝玩家、茶杯for two、social symmetry
+
+✅ **允许**：offset observer position、side vantage、peripheral observation、angled observer perch
+
+---
+
+#### Rule 5 — 禁止圆形传送门框架
+
+❌ **禁止**：through portal、through aperture、through circular opening、through porthole
+
+**原因**：会让玩家变成 physically separated viewer，而不是 attached unnoticed presence
+
+✅ **正确**：observer-side anchored viewpoint、subtle environmental framing、attached observational position
+
+---
+
+#### Rule 6 — 构图应保留私人生活感
+
+画面要像：偶然看到
+
+不是：刻意构图给你看
+
+✅ **允许**：asymmetry、off-center subject、partially obscured framing、lived disorder、imperfect placement
+
+❌ **避免**：perfect symmetry、centered presentation、character staged toward viewer
+
+---
+
+### 推荐的视角类型
+
+基于以上规则，推荐以下视角类型：
+
+**类型1：侧面观察位**
+- 观察点在角色侧面的架子、柜子、装置上
+- 角色从画面侧面或背后的门进入
+- 前景有架子边缘、瓶子轮廓等
+
+**类型2：角落观察位**
+- 观察点在房间角落
+- 斜向观察角色活动区域
+- 能看到部分墙面、门、窗户
+
+**类型3：高处观察位**
+- 观察点在高处（架子顶部、阁楼边缘）
+- 俯视角色
+- 前景有悬挂物、架子边缘
+
+**类型4：窗边观察位**（推荐用于"窗边近距离"场景）
+- 角色坐在窗边工作/学习
+- 观察点在窗外或窗边装置上
+- 可以较近距离观察，但角色仍在忙自己的事
+
+**所有类型的共同点**：
+- 观察位置有物理依据
+- 角色不是面向玩家
+- 前景暗示观察位置
+- 非对称、非居中构图
 
 ### 场景功能约束
 
@@ -53,6 +186,11 @@
 1. **暗示而非展示** — 不直接展示异世界全貌，只展示一角
 2. **留白** — 有足够的想象空间，玩家可以脑补窗口外的世界
 3. **生活感** — 场景有被使用的痕迹，不是展示用的样板间
+
+**核心原则**（来自 `connection-relationship.md`）：
+- **环境叙事 > 角色特写** — 主角是她的生活，不是她的脸
+- **存在大于互动** — 灯亮着、书翻到一半、杯子还在，这些本身就是陪伴
+- **想象力来自缺失** — 不完整的空间、信息、时间
 
 ---
 

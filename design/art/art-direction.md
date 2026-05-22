@@ -172,25 +172,43 @@
 
 ## Visual Hierarchy
 
+**基于**：`design/core/connection-relationship.md` 的"慢变化优先于快动作"原则
+
 ### 注意力优先级（从高到低）
-1. **角色动作**（最高优先级）
-   - 大幅度动作、表情变化
-   - 实现：动画 + 缩放 + 轻微弹跳
-2. **通知/对话气泡**
-   - 新内容提示
-   - 实现：淡入 + 轻微抖动 + 强调色边框
-3. **UI 交互元素**
-   - 按钮、可点击区域
-   - 实现：hover 状态变化 + 鼠标指针变化
+
+**核心理念**：边缘存在感来自低频动态，而非高频动画
+
+1. **慢变化**（最高优先级，低对比度）
+   - 光线变化、翻书、蒸汽、写字、调药、风吹窗帘
+   - 实现：缓慢Tween（2-4秒/循环），低饱和度
+   - 玩家会在余光里感知它
+   
+2. **角色状态变化**（中优先级）
+   - 表情、姿态调整、朝窗边看、在窗边停留
+   - 实现：柔和过渡，不用弹跳
+   - 不是"看镜头"，而是"朝那个方向看"（不确定感）
+   
+3. **偶发事件**（低频高对比）
+   - 归来、带回碎片
+   - 实现：短暂高亮，快速回归平静
+   
 4. **背景装饰**（最低优先级）
    - 环境细节、氛围元素
    - 实现：低对比度、静态或极慢动画
 
 ### 视觉引导原则
-- **运动吸引注意**：重要信息用动画，次要信息保持静态
-- **对比度控制**：角色 > UI > 背景（对比度递减）
-- **尺寸层次**：重要元素占据更大视觉空间
-- **色彩聚焦**：强调色仅用于需要注意的元素
+
+- **慢变化吸引余光** — 重要信息用慢动画，次要信息保持静态
+- **对比度控制** — 角色 > UI > 背景（对比度递减）
+- **尺寸层次** — 重要元素占据更大视觉空间
+- **色彩聚焦** — 强调色仅用于需要注意的元素
+
+**不要**：
+- 高频动画（会变成"通知"而非陪伴）
+- 强高光、高饱和、UI发光
+- 大幅度动作作为常态
+
+**核心**：像桌上盆栽、窗外天气、壁炉火焰那样的存在方式
 
 ---
 
@@ -465,6 +483,55 @@ void fragment() {
 - Godot Shader 文档：https://docs.godotengine.org/en/stable/tutorials/shaders/
 - 2D 光照系统：https://docs.godotengine.org/en/stable/tutorials/2d/2d_lights_and_shadows.html
 - CanvasItem 材质：https://docs.godotengine.org/en/stable/classes/class_canvasitemmaterial.html
+
+---
+
+---
+
+## 最终视觉公式（已收敛）
+
+**基于**：`design/art/visual-generation-spec.md` 和 `design/core/connection-relationship.md`
+
+```
+minimalist editorial illustration
++ architectural sketch
++ miniature diorama
++ voyeuristic framing
++ slice-of-life staging
++ fragmented composition
++ negative space
++ restrained palette
++ soft temporal atmosphere
+```
+
+### 关键特征
+
+**空间与构图参考**：
+- 建筑速写、微缩舞台、剧场剖面、绘本切片
+
+**情绪与时间感参考**：
+- 深夜窗户、雨天窗景、小津安二郎、吉卜力生活段落、深夜电台
+
+**观看关系参考**：
+- 偷看别人窗户、阁楼裂缝、博物馆箱庭、旧电视广播
+
+### 场景密度标准
+
+**玩家一眼应该看到**：
+1. **一级信息**：角色正在做什么
+2. **二级信息**：空间情绪（夜晚、下雨、温暖、孤独）
+3. **三级信息**：远处世界碎片
+
+**除此之外都应该弱化**
+
+### 核心约束
+
+- **被截取的生活镜头** — 不是完整展示
+- **玩家视角有位置** — 不是神视角
+- **角色不是表演** — 她在忙自己的事
+- **环境叙事优先** — 主角是她的生活，不是她的脸
+
+**详细规范参见**：`design/art/visual-generation-spec.md`
 
 ---
 
