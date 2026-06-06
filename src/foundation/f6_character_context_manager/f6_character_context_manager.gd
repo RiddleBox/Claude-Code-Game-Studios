@@ -158,7 +158,7 @@ func _generate_personality_description(character_id: String) -> String:
 
 	var warmth: float = _c5_personality.get_axis("warmth")
 	var curiosity: float = _c5_personality.get_axis("curiosity")
-	var playfulness: float = _c5_personality.get_axis("playfulness")
+	var boldness: float = _c5_personality.get_axis("boldness")
 
 	var traits: Array[String] = []
 
@@ -173,12 +173,11 @@ func _generate_personality_description(character_id: String) -> String:
 		traits.append("充满好奇")
 	elif curiosity < 0.4:
 		traits.append("沉稳内敛")
-
-	# 玩心度
-	if playfulness > 0.6:
-		traits.append("活泼俏皮")
-	elif playfulness < 0.4:
-		traits.append("严肃认真")
+	# 胆量度
+	if boldness > 0.6:
+		traits.append("勇敢主动")
+	elif boldness < 0.4:
+		traits.append("谨慎克制")
 
 	if traits.is_empty():
 		return "平和自然"

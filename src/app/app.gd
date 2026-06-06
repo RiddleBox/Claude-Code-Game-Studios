@@ -54,8 +54,6 @@ func _ready() -> void:
 	# 4. 初始化所有模块
 	_initialize_modules()
 
-	# 5. 启动所有模块
-	_start_modules()
 
 ## 加载配置
 func _load_config() -> void:
@@ -666,16 +664,12 @@ func _start_modules() -> void:
 		print("[App] 应用启动完成，耗时: %d ms" % startup_time)
 		app_started.emit(true)
 
-		# 自动运行集成测试
-		call_deferred("run_integration_tests")
 	else:
 		push_error("[App] 模块启动失败")
 		# 即使部分模块失败，应用仍可运行
 		status = AppStatus.RUNNING
 		app_started.emit(false)
 
-		# 仍然尝试运行集成测试
-		call_deferred("run_integration_tests")
 
 ## 停止应用并清理所有资源
 ##
